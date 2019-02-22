@@ -1,0 +1,12 @@
+[package]
+name = "himawari-8-wallpaper"
+version = "0.1.0"
+authors = ["planet0104 <planet0104@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+reqwest = "*"
+png = "*"
+chrono = "0.4.6"
+wallpaper = "*"
+image = "*"
