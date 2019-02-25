@@ -2,7 +2,7 @@
 fn main() {
     use std::path::Path;
     let mut res = winres::WindowsResource::new();
-    if !Path::new("icon.ico").exists(){
+    if !Path::new("icon.ico").exists() {
         let img = image::open("icon.png").unwrap();
         img.save("icon.ico").unwrap();
     }
@@ -12,5 +12,4 @@ fn main() {
 }
 
 #[cfg(unix)]
-fn main() {
-}
+fn main() {}
