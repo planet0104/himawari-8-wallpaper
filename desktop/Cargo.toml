@@ -11,10 +11,10 @@ png = "*"
 chrono = "0.4.6"
 wallpaper = "*"
 image = "*"
+lazy_static = "*"
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["shellapi", "winuser"] }
-lazy_static = "*"
 thread-id = "3.3.0"
 
 [target.'cfg(windows)'.build-dependencies]
@@ -24,3 +24,8 @@ image = "*"
 [package.metadata.winres]
 OriginalFilename = "himawari-8-wallpaper.exe"
 LegalCopyright = "Copyright © 2019 JiaYe"
+
+[profile.release]
+lto = true
+opt-level = 's'
+panic = 'abort'

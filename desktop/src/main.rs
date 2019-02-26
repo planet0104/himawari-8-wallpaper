@@ -1,4 +1,4 @@
-// #![no_main]
+#![no_main]
 mod himawari8;
 mod wallpaper;
 #[cfg(windows)]
@@ -9,25 +9,21 @@ use winapi::shared::{minwindef::HINSTANCE, ntdef::LPSTR};
 #[macro_use]
 extern crate lazy_static;
 
-use std::sync::mpsc::channel;
-use std::thread;
-use std::time::Duration;
-
-// #[no_mangle]
-// #[allow(non_snake_case)]
-// pub extern "C" fn WinMain(
-//     hInstance: HINSTANCE,
-//     hPrevInstance: HINSTANCE,
-//     szCmdLine: LPSTR,
-//     iCmdShow: i32,
-// ) -> i32 {
-    // windows::win_main(hInstance, hPrevInstance, szCmdLine, iCmdShow);
-// }
-
-#[cfg(windows)]
-fn main() {
-    windows::win_main(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut(), 0);
+#[no_mangle]
+#[allow(non_snake_case)]
+pub extern "C" fn WinMain(
+    hInstance: HINSTANCE,
+    hPrevInstance: HINSTANCE,
+    szCmdLine: LPSTR,
+    iCmdShow: i32,
+) -> i32 {
+    windows::win_main(hInstance, hPrevInstance, szCmdLine, iCmdShow)
 }
+
+// #[cfg(windows)]
+// fn main() {
+//     windows::win_main(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut(), 0);
+// }
 
 #[cfg(not(windows))]
 fn main() {

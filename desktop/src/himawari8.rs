@@ -222,7 +222,7 @@ fn format_url(
 
 //在大图中填充一个550x550的图块
 fn fill_block(target_width: usize, target: &mut Vec<u8>, src: &Vec<u8>, x: usize, y: usize) {
-    println!("组合:{}x{} src:{}", x, y, src.len());
+    // println!("组合:{}x{} src:{}", x, y, src.len());
     for (row, buf) in src.chunks(550 * 3).enumerate() {
         let i = target_width * 3 * (row + 550 * y) + 550 * 3 * x;
         target.get_mut(i..i + 550 * 3).unwrap().copy_from_slice(buf);

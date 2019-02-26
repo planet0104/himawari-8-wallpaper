@@ -1,20 +1,31 @@
 use crate::himawari8;
-use chrono::{DateTime, Datelike, NaiveDateTime, Timelike, Utc};
+use chrono::{DateTime, Datelike, NaiveDateTime, Timelike, Utc, Local};
 use image::GenericImage;
 use image::{ImageBuffer, Rgb};
 use std::env;
 use std::io;
 use std::path::{Path, PathBuf};
 use wallpaper;
+use std::sync::Mutex;
+
+const INFO_DOWNLOADING:&str = "正在下载中，请稍后";
+
+lazy_static!{
+    static ref DOWNLOADING:Mutex<bool> = Mutex::new(false);
+}
 
 //dim 2 => 2x2图
 //dim 4 => 4x4图
-fn download<C>(dim: i32, callback: C) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>, Box<std::error::Error>> where C:Fn(i32, i32)+'static {
+fn download<C>(dim: i32, callback: C) -> Result<Option<ImageBuffer<Rgb<u8>, Vec<u8>>>, Box<std::error::Error>> where C:Fn(i32, i32)+'static {
+    if *DOWNLOADING.lock().unwrap(){
+        return Ok(None);
+    }
+    *DOWNLOADING.lock().unwrap() = true;
     let mut timestamp = Utc::now().timestamp_millis();
     //减去20分钟
     timestamp -= 20 * 60 * 1000;
     let utc = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(timestamp / 1000, 0), Utc);
-    println!("时间:{:?}", utc);
+    // println!("时间:{:?}", utc);
     //20分钟之前的
     let file_name = format!(
         "{}d_{}_{}_{}.png",
@@ -25,8 +36,19 @@ fn download<C>(dim: i32, callback: C) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>, B
         utc.hour(),
         utc.minute() / 10
     );
+    // let wallpaper_name = format!(
+    //     "wallpaper_{}d_{}_{}_{}.png",
+    //     dim,
+    //     // utc.year(),
+    //     // utc.month(),
+    //     utc.day(),
+    //     utc.hour(),
+    //     utc.minute() / 10
+    // );
     if Path::new(&file_name).exists() {
-        Ok(image::open(file_name)?.to_rgb())
+        println!("{:?} 文件已存在 直接返回{}", Local::now(), file_name);
+        *DOWNLOADING.lock().unwrap() = false;
+        Ok(Some(image::open(file_name)?.to_rgb()))
     } else {
         let image = if dim == 4 {
             himawari8::combine_4x4(utc.year(), utc.month(), utc.day(), utc.hour(), utc.minute(), callback)?
@@ -34,7 +56,8 @@ fn download<C>(dim: i32, callback: C) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>, B
             himawari8::combine_2x2(utc.year(), utc.month(), utc.day(), utc.hour(), utc.minute(), callback)?
         };
         image.save(file_name)?;
-        Ok(image)
+        *DOWNLOADING.lock().unwrap() = false;
+        Ok(Some(image))
     }
 }
 
@@ -57,6 +80,11 @@ pub fn set_full<C>(screen_width: i32, screen_height:i32, callback: C) -> Result<
     }else{
         download(4, callback)?
     };
+    if image.is_none(){
+        println!("{}", INFO_DOWNLOADING);
+        return Ok(());
+    }
+    let image = image.unwrap();
 
     //缩放
     let size = if screen_height<screen_width{
@@ -108,6 +136,11 @@ where
 //取半边, 由于半边要求地球图片不管是720p还是1080p，直径都大于1100，所以都取4x4图
 pub fn set_half<C>(screen_width: i32, screen_height:i32, callback: C) -> Result<(), Box<std::error::Error>>  where C:Fn(i32, i32)+'static {
     let image = download(4, callback)?;
+    if image.is_none(){
+        println!("{}", INFO_DOWNLOADING);
+        return Ok(());
+    }
+    let image = image.unwrap();
 
     let mut wallpaper: ImageBuffer<Rgb<u8>, Vec<u8>> = ImageBuffer::new(screen_width as u32, screen_height as u32);
 

@@ -34,6 +34,7 @@ lazy_static!{
     static ref WM_TASKBAR_CREATED:UINT = unsafe{ RegisterWindowMessageW(str_to_ws("TaskbarCreated").as_ptr()) };
     static ref H_MENU:Mutex<isize> = Mutex::new(0);
     static ref WALLPAPER_TYPE:Mutex<i32> = Mutex::new(TYPE_FULL);
+    static ref TIMER_ID:Mutex<usize> = Mutex::new(0);
 }
 
 thread_local! {
@@ -116,7 +117,7 @@ pub unsafe extern "system" fn window_proc(
 
             //启动时第一次下载
             switch_to_full();
-            //启动定时器
+            //启动定时器 10分钟一次, 30分钟一次, 60分钟一次
             unsafe extern "system" fn task(_: HWND, _: UINT, _: UINT_PTR, _: DWORD){
                 match *WALLPAPER_TYPE.lock().unwrap(){
                     TYPE_HALF => switch_to_half(),
@@ -124,7 +125,7 @@ pub unsafe extern "system" fn window_proc(
                     _ => ()
                 };
             }
-            SetTimer(h_wnd, 1, 5000, Some(task));
+            *TIMER_ID.lock().unwrap() = SetTimer(h_wnd, 1, 10*60*1000, Some(task));
         }
         WM_USER => {
             match l_param as u32 {
@@ -174,8 +175,12 @@ pub unsafe extern "system" fn window_proc(
             }
         }
         WM_DESTROY => {
+            println!("程序结束");
             NID.with(|nid| {
                 let mut nid = nid.borrow_mut();
+                //销毁时钟
+                KillTimer(nid.hWnd, *TIMER_ID.lock().unwrap());
+                //删除托盘
                 Shell_NotifyIconW(NIM_DELETE, &mut *nid);
             });
             PostQuitMessage(0);
