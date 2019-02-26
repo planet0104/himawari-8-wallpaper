@@ -16,7 +16,7 @@ lazy_static!{
 
 //dim 2 => 2x2图
 //dim 4 => 4x4图
-fn download<C>(dim: i32, callback: C) -> Result<Option<ImageBuffer<Rgb<u8>, Vec<u8>>>, Box<std::error::Error>> where C:Fn(i32, i32)+'static {
+fn download<C>(path: &str, dim: i32, callback: C) -> Result<Option<ImageBuffer<Rgb<u8>, Vec<u8>>>, Box<std::error::Error>> where C:Fn(i32, i32)+'static {
     if *DOWNLOADING.lock().unwrap(){
         return Ok(None);
     }
@@ -28,7 +28,8 @@ fn download<C>(dim: i32, callback: C) -> Result<Option<ImageBuffer<Rgb<u8>, Vec<
     // println!("时间:{:?}", utc);
     //20分钟之前的
     let file_name = format!(
-        "{}d_{}_{}_{}.png",
+        "{}\\{}d_{}_{}_{}.png",
+        path,
         dim,
         // utc.year(),
         // utc.month(),
@@ -62,7 +63,7 @@ fn download<C>(dim: i32, callback: C) -> Result<Option<ImageBuffer<Rgb<u8>, Vec<
 }
 
 //整幅画
-pub fn set_full<C>(screen_width: i32, screen_height:i32, callback: C) -> Result<(), Box<std::error::Error>>  where C:Fn(i32, i32)+'static {
+pub fn set_full<C>(path:&str, screen_width: i32, screen_height:i32, callback: C) -> Result<(), Box<std::error::Error>>  where C:Fn(i32, i32)+'static {
     //判断屏幕 横屏(桌面), 竖屏(手机)
 
     /*
@@ -76,9 +77,9 @@ pub fn set_full<C>(screen_width: i32, screen_height:i32, callback: C) -> Result<
         如果屏幕宽度大于1200，下载4x4图
      */
     let image = if std::cmp::min(screen_width, screen_height)<1200{
-        download(2, callback)?
+        download(path, 2, callback)?
     }else{
-        download(4, callback)?
+        download(path, 4, callback)?
     };
     if image.is_none(){
         println!("{}", INFO_DOWNLOADING);
@@ -115,8 +116,9 @@ pub fn set_full<C>(screen_width: i32, screen_height:i32, callback: C) -> Result<
             .copy_from_slice(buf);
     }
 
-    wallpaper.save("wallpaper.png")?;
-    wallpaper::set_from_path(absolute_path("wallpaper.png")?.to_str().unwrap())?;
+    let wallpaper_name = format!("{}\\wallpaper.png", path);
+    wallpaper.save(&wallpaper_name)?;
+    wallpaper::set_from_path(absolute_path(wallpaper_name)?.to_str().unwrap())?;
 
     Ok(())
 }
@@ -134,8 +136,8 @@ where
 }
 
 //取半边, 由于半边要求地球图片不管是720p还是1080p，直径都大于1100，所以都取4x4图
-pub fn set_half<C>(screen_width: i32, screen_height:i32, callback: C) -> Result<(), Box<std::error::Error>>  where C:Fn(i32, i32)+'static {
-    let image = download(4, callback)?;
+pub fn set_half<C>(path:&str, screen_width: i32, screen_height:i32, callback: C) -> Result<(), Box<std::error::Error>>  where C:Fn(i32, i32)+'static {
+    let image = download(path, 4, callback)?;
     if image.is_none(){
         println!("{}", INFO_DOWNLOADING);
         return Ok(());
@@ -200,8 +202,9 @@ pub fn set_half<C>(screen_width: i32, screen_height:i32, callback: C) -> Result<
         }
     };
 
-    wallpaper.save("wallpaper.png")?;
-    wallpaper::set_from_path(absolute_path("wallpaper.png")?.to_str().unwrap())?;
+    let wallpaper_name = format!("{}\\wallpaper.png", path);
+    wallpaper.save(&wallpaper_name)?;
+    wallpaper::set_from_path(absolute_path(wallpaper_name)?.to_str().unwrap())?;
 
     Ok(())
 }

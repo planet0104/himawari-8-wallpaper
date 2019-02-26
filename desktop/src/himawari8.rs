@@ -142,48 +142,7 @@ pub fn combine_2x2<C>(
 
 //取一张图片
 fn download_image(url: &str) -> Result<(OutputInfo, Vec<u8>), Box<std::error::Error>> {
-    let test = false;
-    let (info, buf) = if test {
-        use std::fs::File;
-        let file_name = if url.ends_with("0_1.png") {
-            "000000_0_1.png"
-        } else if url.ends_with("0_2.png") {
-            "000000_0_2.png"
-        } else if url.ends_with("0_3.png") {
-            "000000_0_3.png"
-        } else if url.ends_with("1_0.png") {
-            "000000_1_0.png"
-        } else if url.ends_with("1_1.png") {
-            "000000_1_1.png"
-        } else if url.ends_with("1_2.png") {
-            "000000_1_2.png"
-        } else if url.ends_with("1_3.png") {
-            "000000_1_3.png"
-        } else if url.ends_with("2_0.png") {
-            "000000_2_0.png"
-        } else if url.ends_with("2_1.png") {
-            "000000_2_1.png"
-        } else if url.ends_with("2_2.png") {
-            "000000_2_2.png"
-        } else if url.ends_with("2_3.png") {
-            "000000_2_3.png"
-        } else if url.ends_with("3_0.png") {
-            "000000_3_0.png"
-        } else if url.ends_with("3_1.png") {
-            "000000_3_1.png"
-        } else if url.ends_with("3_2.png") {
-            "000000_3_2.png"
-        } else if url.ends_with("3_3.png") {
-            "000000_3_3.png"
-        } else {
-            "000000_0_0.png"
-        };
-        let decoder = png::Decoder::new(File::open(file_name)?);
-        let (info, mut reader) = decoder.read_info().unwrap();
-        let mut buf = vec![0; info.buffer_size()];
-        reader.next_frame(&mut buf).unwrap();
-        (info, buf)
-    } else {
+    let (info, buf) = {
         println!("开始下载:{}", url);
         let decoder = png::Decoder::new(reqwest::get(url)?);
         let (mut info, mut reader) = decoder.read_info().unwrap();

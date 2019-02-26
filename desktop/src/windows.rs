@@ -13,10 +13,11 @@ use winapi::um::wingdi::{GetStockObject, WHITE_BRUSH};
 use winapi::um::winuser::*;
 use std::sync::Mutex;
 use winapi::shared::basetsd::UINT_PTR;
+use std::path::Path;
 
 //https://blog.csdn.net/end_ing/article/details/19168679
 
-static APP_NAME: &str = "himawari8壁纸";
+pub static APP_NAME: &str = "himawari8壁纸";
 
 const IDR_EXIT: usize = 10;
 const IDR_FULL: usize = 11;
@@ -35,6 +36,7 @@ lazy_static!{
     static ref H_MENU:Mutex<isize> = Mutex::new(0);
     static ref WALLPAPER_TYPE:Mutex<i32> = Mutex::new(TYPE_FULL);
     static ref TIMER_ID:Mutex<usize> = Mutex::new(0);
+    static ref TMP_PATH:Mutex<String> = Mutex::new(String::new());
 }
 
 thread_local! {
@@ -45,7 +47,7 @@ thread_local! {
 fn switch_to_full() {
     let tid = thread_id::get();
     std::thread::spawn(move || {
-        if wallpaper::set_full(*SCREEN_WIDTH, *SCREEN_HEIGHT, move |current:i32, total:i32|{
+        if wallpaper::set_full(&*TMP_PATH.lock().unwrap(), *SCREEN_WIDTH, *SCREEN_HEIGHT, move |current:i32, total:i32|{
             unsafe{ PostThreadMessageW(tid as u32, MSG_PROGRESS, current as usize, total as isize); }
         }).is_err() {
             unsafe {
@@ -63,7 +65,7 @@ fn switch_to_full() {
 fn switch_to_half() {
     let tid = thread_id::get();
     std::thread::spawn(move || {
-        if wallpaper::set_half(*SCREEN_WIDTH, *SCREEN_HEIGHT, move |current:i32, total:i32|{
+        if wallpaper::set_half(&*TMP_PATH.lock().unwrap(), *SCREEN_WIDTH, *SCREEN_HEIGHT, move |current:i32, total:i32|{
             unsafe{ PostThreadMessageW(tid as u32, MSG_PROGRESS, current as usize, total as isize); }
         }).is_err() {
             unsafe {
@@ -94,14 +96,20 @@ pub unsafe extern "system" fn window_proc(
                 nid.uID = 0;
                 nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
                 nid.uCallbackMessage = WM_USER;
-                nid.hIcon = LoadImageW(
-                    0 as HINSTANCE,
-                    str_to_ws("icon.ico").as_ptr(),
-                    IMAGE_ICON,
-                    0,
-                    0,
-                    LR_LOADFROMFILE,
-                ) as HICON; //图标
+                let icon_file = format!("{}\\icon.ico", *TMP_PATH.lock().unwrap());
+                println!("icon_file={}", icon_file);
+                nid.hIcon = if Path::new(&icon_file).exists() {
+                    LoadImageW(
+                        0 as HINSTANCE,
+                        str_to_ws(&*TMP_PATH.lock().unwrap().as_str()).as_ptr(),
+                        IMAGE_ICON,
+                        0,
+                        0,
+                        LR_LOADFROMFILE,
+                    ) as HICON
+                }else{
+                    LoadIconW(0 as HINSTANCE, IDI_APPLICATION)
+                };//图标
                 nid.szTip
                     .get_mut(0..app_name.len())
                     .unwrap()
@@ -201,25 +209,31 @@ pub unsafe extern "system" fn window_proc(
     DefWindowProcW(h_wnd, u_msg, w_param, l_param)
 }
 
+pub fn alert(title:&str, msg:&str){
+    unsafe {
+        MessageBoxW(
+            null_mut(),
+            str_to_ws(msg).as_ptr(),
+            str_to_ws(title).as_ptr(),
+            MB_OK,
+        );
+    }
+}
+
 #[allow(non_snake_case)]
 pub fn win_main(
     hInstance: HINSTANCE,
     _hPrevInstance: HINSTANCE,
     _szCmdLine: LPSTR,
     iCmdShow: i32,
+    file_dir:String
 ) -> i32 {
+    *TMP_PATH.lock().unwrap() = file_dir;
     let app_name = str_to_ws(APP_NAME);
 
     let handle = unsafe { FindWindowW(null_mut(), app_name.as_ptr()) };
     if !handle.is_null() {
-        unsafe {
-            MessageBoxW(
-                null_mut(),
-                str_to_ws("程序已经运行").as_ptr(),
-                app_name.as_ptr(),
-                MB_OK,
-            );
-        }
+        alert(APP_NAME, "程序已经运行");
         return 0;
     }
 
@@ -237,14 +251,7 @@ pub fn win_main(
     wndclass.lpszClassName = app_name.as_ptr();
 
     if unsafe { RegisterClassW(&wndclass) == 0 } {
-        unsafe {
-            MessageBoxW(
-                null_mut(),
-                str_to_ws("程序需要在Windows NT运行！").as_ptr(),
-                app_name.as_ptr(),
-                MB_ICONERROR,
-            );
-        }
+        alert(APP_NAME, "程序需要在Windows NT运行！");
         return 0;
     }
 
