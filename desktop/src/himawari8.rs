@@ -19,8 +19,11 @@ pub fn combine_4x4<C>(
     day: u32,
     hour: u32,
     ten_minute: u32,
-    callback: C
-) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>, Box<std::error::Error>> where C:Fn(i32, i32)+'static{
+    callback: C,
+) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>, Box<std::error::Error>>
+where
+    C: Fn(i32, i32) + 'static,
+{
     println!("{:?} 下载4x4图片..", Local::now());
     let img00 = format_url(year, month, day, hour, ten_minute / 10, 4, 0, 0);
     let img10 = format_url(year, month, day, hour, ten_minute / 10, 4, 1, 0);
@@ -112,8 +115,11 @@ pub fn combine_2x2<C>(
     day: u32,
     hour: u32,
     ten_minute: u32,
-    callback: C
-) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>, Box<std::error::Error>> where C: Fn(i32, i32)+ 'static{
+    callback: C,
+) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>, Box<std::error::Error>>
+where
+    C: Fn(i32, i32) + 'static,
+{
     println!("{:?} 下载2x2图片..", Local::now());
     let img00 = format_url(year, month, day, hour, ten_minute / 10, 2, 0, 0);
     let img10 = format_url(year, month, day, hour, ten_minute / 10, 2, 1, 0);
@@ -143,10 +149,10 @@ pub fn combine_2x2<C>(
 //取一张图片
 fn download_image(url: &str) -> Result<(OutputInfo, Vec<u8>), Box<std::error::Error>> {
     let (info, buf) = {
-        println!("开始下载:{}", url);
+        // println!("开始下载:{}", url);
         let decoder = png::Decoder::new(reqwest::get(url)?);
         let (mut info, mut reader) = decoder.read_info().unwrap();
-        println!("下载完成:{} {}x{}", url, info.width, info.height);
+        // println!("下载完成:{} {}x{}", url, info.width, info.height);
         let mut buf = vec![0; info.buffer_size()];
         reader.next_frame(&mut buf).unwrap();
         //如果是灰度图，转换成rgb

@@ -1,6 +1,6 @@
 [package]
 name = "himawari-8-wallpaper"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["planet0104 <planet0104@gmail.com>"]
 edition = "2018"
 build = "build.rs"
@@ -10,8 +10,13 @@ reqwest = "*"
 png = "*"
 chrono = "0.4.6"
 wallpaper = "*"
-image = "*"
 lazy_static = "*"
+rust-ini = "*"
+
+[dependencies.image]
+version = "*"
+default-features = false
+features  = ["ico", "png_codec"]
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["shellapi", "winuser"] }
@@ -23,7 +28,7 @@ image = "*"
 
 [package.metadata.winres]
 OriginalFilename = "himawari-8-wallpaper.exe"
-LegalCopyright = "Copyright © 2019 JiaYe"
+LegalCopyright = "Copyright 2019 JiaYe"
 
 [profile.release]
 lto = true
