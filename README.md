@@ -18,8 +18,8 @@ http://himawari8-dl.nict.go.jp/himawari8/img/D531106/2d/550/2019/02/27/140000_1_
 由于服务器在日本，国内访问速度比较慢，桌面分辨率小于1920x1200时，全幅图都是下载2x2图(分辨率1100x1100)，速度较快，半幅图时需要下载4x4的图(2200x2200)，速度较慢，请耐心等待。  
 
 下载地址：  
-[1.0.0 Windows 64位](https://github.com/planet0104/himawari-8-wallpaper/blob/master/himawari-8-wallpaper.exe)  
-[1.0.0 Linux 64位](https://github.com/planet0104/himawari-8-wallpaper/blob/master/himawari-8-wallpaper)  
+[1.0.0 Windows 64位](https://raw.githubusercontent.com/planet0104/himawari-8-wallpaper/master/himawari-8-wallpaper.exe)  
+[1.0.0 Linux 64位](https://raw.githubusercontent.com/planet0104/himawari-8-wallpaper/master/himawari-8-wallpaper)  
 
 Windows版本运行以后，在系统托盘区域点击图标进行设置![图片地址](https://github.com/planet0104/himawari-8-wallpaper/blob/master/desktop/icon.png)  
 Linux版本运行：  
