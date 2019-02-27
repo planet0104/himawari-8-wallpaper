@@ -44,12 +44,12 @@ where
     );
 
     //删除旧的文件
-    let paths = std::fs::read_dir("").unwrap();
-    let cur_2d = format!("2d_{}_{}_{}.png", utc.day(), utc.hour(), utc.minute() / 10);
-    let cur_4d = format!("4d_{}_{}_{}.png", utc.day(), utc.hour(), utc.minute() / 10);
+    let paths = std::fs::read_dir("./").unwrap();
+    let cur_2d = format!("./2d_{}_{}_{}.png", utc.day(), utc.hour(), utc.minute() / 10);
+    let cur_4d = format!("./4d_{}_{}_{}.png", utc.day(), utc.hour(), utc.minute() / 10);
     for path in paths {
         let p = path.unwrap().path().display().to_string();
-        if p != "icon.ico" && p != cur_2d && p != cur_4d && p != "wallpaper.png" && p != "conf.ini"
+        if p != "./icon.ico" && p != cur_2d && p != cur_4d && p != "./wallpaper.png" && p != "./conf.ini"
         {
             println!("删除文件:{}", p);
             let _ = std::fs::remove_file(p);
@@ -141,7 +141,11 @@ where
     //拼接
     let offset_x = ((wallpaper.width() - image.width()) / 2) as usize;
     let top_border_scale = if screen_height > 1200 { 0.25 } else { 0.0 };
-    let offset_y = ((wallpaper.height() - image.height()) as f64 * top_border_scale) as usize;
+    let offset_y = if cfg!(windows){
+        ((wallpaper.height() - image.height()) as f64 * top_border_scale) as usize
+    }else{
+        (wallpaper.height() - image.height()) as usize/2
+    };
     let ew = image.width() as usize;
     let image = image.into_raw();
     for (y, buf) in image.chunks(ew * 3).enumerate() {

@@ -1,15 +1,15 @@
-#![no_main]
+// #![no_main]
 mod himawari8;
 mod wallpaper;
 #[cfg(windows)]
 mod windows;
 #[cfg(windows)]
 use winapi::shared::{minwindef::HINSTANCE, ntdef::LPSTR};
-#[cfg(windows)]
 #[macro_use]
 extern crate lazy_static;
 use std::env;
 use std::fs::create_dir;
+extern crate wallpaper as wp;
 
 const TYPE_FULL: i32 = 0; //整幅图
 const TYPE_HALF: i32 = 1; //半副图
@@ -91,6 +91,7 @@ pub fn write_config(conf: &Config) {
 
 #[no_mangle]
 #[allow(non_snake_case)]
+#[cfg(windows)]
 pub extern "C" fn WinMain(
     hInstance: HINSTANCE,
     hPrevInstance: HINSTANCE,
@@ -112,7 +113,71 @@ pub extern "C" fn WinMain(
 // }
 
 #[cfg(not(windows))]
-fn main() {
-    wallpaper::set_full().unwrp();
-    println!("程序结束.");
+fn main() ->Result<(), Box<std::error::Error>> {
+    let mut conf = init_dir();
+    use std::env;
+    use std::{thread, time};
+
+    for argument in env::args() {
+        if argument == "freq10"{
+            conf.freq = 10;
+        }else if argument == "freq20"{
+            conf.freq = 20;
+        }else if argument == "freq30"{
+            conf.freq = 30;
+        }else if argument == "freq60"{
+            conf.freq = 60;
+        }else if argument == "mode0"{
+            conf.show_type = 0;
+        }else if argument == "mode1"{
+            conf.show_type = 1;
+        }
+    }
+    
+    let (mut screen_width, mut screen_height) = (1920, 1200);
+
+    //if cfg!(target_os = "linux")
+    let _ = {
+        use std::process::Command;
+        let dim = String::from_utf8(Command::new("sh")
+                .arg("-c")
+                .arg("xdpyinfo | grep dimensions")
+                .output()?.stdout)?;
+        
+        for item in dim.split(" "){
+            if item.contains("x") && item!="pixels" && !item.contains("(") && !item.contains(")"){
+                let mut dim = item.split("x");
+                screen_width = dim.next().unwrap().parse::<i32>().unwrap();
+                screen_height = dim.next().unwrap().parse::<i32>().unwrap();
+            }
+        }
+    };
+
+    println!("屏幕分辨率:{}x{}", screen_width, screen_height);
+
+    loop{
+        if conf.show_type==TYPE_HALF{
+            if let Err(err) = wallpaper::set_half(
+                screen_width,
+                screen_height,
+                |current: i32, total: i32|{
+                    println!("下载壁纸{}/{}", current, total);
+                },
+            ){
+                println!("壁纸下载失败:{:?}", err);
+            }
+        }else if conf.show_type==TYPE_FULL{
+            if let Err(err) = wallpaper::set_full(
+                screen_width,
+                screen_height,
+                |current: i32, total: i32|{
+                    println!("下载壁纸{}/{}", current, total);
+                },
+            ){
+                println!("壁纸下载失败:{:?}", err);
+            }
+        }
+        //延时切换壁纸
+        thread::sleep(time::Duration::from_millis(conf.freq as u64*60*1000));
+    }
 }

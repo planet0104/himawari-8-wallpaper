@@ -12,11 +12,10 @@ chrono = "0.4.6"
 wallpaper = "*"
 lazy_static = "*"
 rust-ini = "*"
+image = "*"
 
-[dependencies.image]
-version = "*"
-default-features = false
-features  = ["ico", "png_codec"]
+[target.'cfg(not(windows))'.dependencies]
+clap = "2.32.0"
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["shellapi", "winuser"] }
