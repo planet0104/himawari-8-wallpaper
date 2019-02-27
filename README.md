@@ -1,7 +1,10 @@
 # himawari-8-wallpaper
 
-Himawari 8是日本的气象卫星，[卫星官网](http://himawari8.nict.go.jp/himawari8-image.htm)的图片每隔10分钟更新一次，可能是图片有延迟，大概只能取到20分钟之前的图片，软件将卫星图片实时设置为桌面壁纸，每隔一段时间自动更新。
-下载图片的url格式如下：
+Himawari 8是日本的气象卫星，[卫星官网](http://himawari8.nict.go.jp/himawari8-image.htm)的图片每隔10分钟更新一次。himawari-8-wallpaper可自动下载卫星照片并设置为桌面壁纸。  
+
+
+
+从网站获取图片时，大概只能取到20分钟之前的图片。下载图片的url格式如下：  
 ```Rust
 let url = format!("http://himawari8-dl.nict.go.jp/himawari8/img/D531106/{}d/550/{}/{:02}/{:02}/{:02}{}000_{}_{}.png", d, year, month, day, hour, ten_minute/10, x, y);
 ```
