@@ -1,0 +1,47 @@
+apply plugin: 'com.android.application'
+
+android {
+    signingConfigs {
+        release {
+            keyAlias 'h8w'
+            keyPassword '123456'
+            storeFile file('../h8w.jks')
+            storePassword '123456'
+        }
+    }
+    compileSdkVersion 27
+    defaultConfig {
+        applicationId "io.github.planet0104.h8w"
+        minSdkVersion 15
+        targetSdkVersion 29
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.bg_ring.runner.AndroidJUnitRunner"
+        //只使用 armeabi-v7a
+        ndk {
+            abiFilters "armeabi-v7a", "x86"
+        }
+    }
+    ext {
+    }
+    buildTypes {
+        debug {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            debuggable false
+            jniDebuggable false
+            signingConfig signingConfigs.release
+            renderscriptDebuggable false
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: '*.aar')
+    implementation fileTree(dir: 'libs', include: '*.jar')
+    implementation 'com.android.support:appcompat-v7:27.1.1'
+}

@@ -1,0 +1,25 @@
+[package]
+name = "wallpaper"
+version = "1.0.0"
+authors = ["JiaYe"]
+edition = "2018"
+
+[dependencies]
+log = "*"
+lazy_static = "*"
+jni = { version = "*", default-features = false }
+android_logger = "*"
+android_support = "*"
+
+chrono = "*"
+image = "*"
+png = "*"
+reqwest = "*"
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+lto = true
+panic = 'abort'
+opt-level = 's'
