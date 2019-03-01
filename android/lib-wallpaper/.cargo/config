@@ -1,3 +1,4 @@
 [target.arm-linux-androideabi]
 ar = "~/ndk-standalone-16-arm/bin/arm-linux-androideabi-ar"
 linker = "~/ndk-standalone-16-arm/bin/arm-linux-androideabi-gcc"
+
