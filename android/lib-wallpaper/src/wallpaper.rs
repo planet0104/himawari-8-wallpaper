@@ -1,0 +1,1 @@
+include!("../../../desktop/src/wallpaper.rs");

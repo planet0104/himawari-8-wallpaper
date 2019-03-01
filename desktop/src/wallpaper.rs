@@ -6,7 +6,6 @@ use std::env;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
-use wallpaper;
 
 const INFO_DOWNLOADING: &str = "正在下载中，请稍后";
 
@@ -157,7 +156,7 @@ where
     }
 
     wallpaper.save("wallpaper.png")?;
-    wallpaper::set_from_path(absolute_path("wallpaper.png")?.to_str().unwrap())?;
+    crate::set_wallpaper_from_path(absolute_path("wallpaper.png")?.to_str().unwrap());
 
     Ok(())
 }
@@ -260,7 +259,7 @@ where
     };
 
     wallpaper.save("wallpaper.png")?;
-    wallpaper::set_from_path(absolute_path("wallpaper.png")?.to_str().unwrap())?;
+    crate::set_wallpaper_from_path(absolute_path("wallpaper.png")?.to_str().unwrap());
 
     Ok(())
 }

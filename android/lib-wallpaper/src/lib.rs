@@ -9,8 +9,12 @@ use jni::{JNIEnv};
 use jni::objects::{JObject, JString, JClass, JValue};
 use jni::sys::{jint, jbyteArray};
 
-include!("../../../desktop/src/himawari8.rs");
-include!("../../../desktop/src/wallpaper.rs");
+mod himawari8;
+mod wallpaper;
+
+pub fn set_wallpaper_from_path(path:&str){
+	
+}
 
 //JNI加载完成
 #[no_mangle]

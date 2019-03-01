@@ -30,12 +30,3 @@ source ~/.bashrc
 [target.arm-linux-androideabi]
 ar = "~/ndk-standalone-16-arm/bin/arm-linux-androideabi-ar"
 linker = "~/ndk-standalone-16-arm/bin/arm-linux-androideabi-gcc"
-
-
-https://github.com/sfackler/rust-openssl/issues/897
-
-https://github.com/paulrouget/servofocus/blob/565eeea6ba7a7a74aa3fead29c77e3983c31f654/rust/android/build.sh#L34
-
-编译:
-https://github.com/paulrouget/servofocus/blob/master/rust/android/build.sh
-

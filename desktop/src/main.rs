@@ -1,4 +1,4 @@
-#![no_main]
+// #![no_main]
 mod himawari8;
 mod wallpaper;
 #[cfg(windows)]
@@ -111,6 +111,10 @@ pub extern "C" fn WinMain(
 //         init_dir(),
 //     );
 // }
+
+pub fn set_wallpaper_from_path(path:&str){
+    let _ = wp::set_from_path(path);
+}
 
 #[cfg(not(windows))]
 fn main() ->Result<(), Box<std::error::Error>> {
