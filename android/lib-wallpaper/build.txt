@@ -1,3 +1,6 @@
+https://codeload.github.com/curl/curl/zip/65eb65fde64bd5faff6d6a7740f9436336e290e0
+https://codeload.github.com/openssl/openssl/zip/69f6b3ceaba493e70e1296880ea6c93e40714f0f
+
 rustup target add armv7-linux-androideabi
 
 sudo apt install libssl-dev
