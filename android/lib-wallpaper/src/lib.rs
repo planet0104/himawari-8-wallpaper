@@ -13,7 +13,7 @@ mod himawari8;
 mod wallpaper;
 
 pub fn set_wallpaper_from_path(path:&str){
-	
+	info!("调用设置壁纸! {}", path);
 }
 
 //JNI加载完成
@@ -28,6 +28,16 @@ pub extern fn JNI_OnLoad(_vm: jni::JavaVM, _reserved: *mut std::ffi::c_void) -> 
 #[no_mangle]
 pub extern fn Java_io_github_planet0104_h8w_MainActivity_init<'a>(env: JNIEnv, _activity: JClass, activity:JObject){
 	info!("init..");
+	info!("start download..");
+	if let Err(err) = wallpaper::set_full(
+		480,
+		800,
+		|current: i32, total: i32|{
+			info!("下载壁纸{}/{}", current, total);
+		},
+	){
+		info!("壁纸下载失败:{:?}", err);
+	}
 	// if result.is_err(){
 	// 	let err = result.err();
 	// 	error!("{:?}", &err);
