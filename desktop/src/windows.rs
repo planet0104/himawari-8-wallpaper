@@ -269,7 +269,7 @@ pub unsafe extern "system" fn window_proc(
             }
         }
         WM_DESTROY => {
-            println!("程序结束");
+            info!("程序结束");
             NID.with(|nid| {
                 let mut nid = nid.borrow_mut();
                 //销毁时钟

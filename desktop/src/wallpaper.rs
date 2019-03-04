@@ -1,8 +1,7 @@
 use crate::himawari8;
-use chrono::{DateTime, Datelike, Local, NaiveDateTime, Timelike, Utc};
+use chrono::{DateTime, Datelike, NaiveDateTime, Timelike, Utc};
 use image::GenericImage;
 use image::{ImageBuffer, Rgb};
-use std::path::Path;
 use std::sync::Mutex;
 
 const INFO_DOWNLOADING: &str = "正在下载中，请稍后";
@@ -11,6 +10,7 @@ lazy_static! {
     static ref DOWNLOADING: Mutex<bool> = Mutex::new(false);
 }
 
+//download反正一张原始的卫星照片
 //dim 2 => 2x2图
 //dim 4 => 4x4图
 fn download<C>(
@@ -40,41 +40,13 @@ where
         utc.minute() / 10
     );
 
-    //删除旧的文件
-    let paths = std::fs::read_dir("./")?;
-    let cur_2d = format!(
-        "./2d_{}_{}_{}.png",
-        utc.day(),
-        utc.hour(),
-        utc.minute() / 10
-    );
-    let cur_4d = format!(
-        "./4d_{}_{}_{}.png",
-        utc.day(),
-        utc.hour(),
-        utc.minute() / 10
-    );
-    for path in paths {
-        let p = path?.path().display().to_string();
-        if p != "./icon.ico"
-            && p != cur_2d
-            && p != cur_4d
-            && p != "./wallpaper.png"
-            && p != "./conf.ini"
-        {
-            println!("删除文件:{}", p);
-            let _ = std::fs::remove_file(p);
-        }
-    }
-
-    if Path::new(&file_name).exists() {
-        println!(
-            "{:?} 文件已存在 直接返回{}",
-            Local::now(),
+    if let Some(image) = crate::open_image(&file_name){
+        info!(
+            "文件已存在 直接返回{}",
             file_name
         );
         *DOWNLOADING.lock()? = false;
-        Ok(Some(image::open(file_name)?.to_rgb()))
+        Ok(Some(image))
     } else {
         let image = if dim == 4 {
             himawari8::combine_4x4(
@@ -95,7 +67,7 @@ where
                 callback,
             )?
         };
-        image.save(file_name)?;
+        crate::save_image(utc, &file_name, &image);
         *DOWNLOADING.lock()? = false;
         Ok(Some(image))
     }
@@ -128,7 +100,7 @@ where
         download(4, callback)?
     };
     if image.is_none() {
-        println!("{}", INFO_DOWNLOADING);
+        info!("{}", INFO_DOWNLOADING);
         return Ok(());
     }
     let image = image.unwrap();
@@ -181,7 +153,7 @@ where
 {
     let image = download(4, callback)?;
     if image.is_none() {
-        println!("{}", INFO_DOWNLOADING);
+        info!("{}", INFO_DOWNLOADING);
         return Ok(());
     }
     let image = image.unwrap();

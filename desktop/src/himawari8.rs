@@ -1,6 +1,5 @@
 //http://himawari8.nict.go.jp/himawari8-image.htm
 
-use chrono::Local;
 use image::{ImageBuffer, Rgb};
 use png::{ColorType, OutputInfo};
 
@@ -24,7 +23,7 @@ pub fn combine_4x4<C>(
 where
     C: Fn(i32, i32) + 'static,
 {
-    println!("{:?} 下载4x4图片..", Local::now());
+    info!("下载4x4图片..");
     let img00 = format_url(year, month, day, hour, ten_minute / 10, 4, 0, 0);
     let img10 = format_url(year, month, day, hour, ten_minute / 10, 4, 1, 0);
     let img20 = format_url(year, month, day, hour, ten_minute / 10, 4, 2, 0);
@@ -81,7 +80,7 @@ where
     callback(16, 16);
     let (_, buf33) = download_image(&img33)?;
 
-    println!("{:?} 合成4x4图片..", Local::now());
+    info!("合成4x4图片..");
     let mut data = vec![0u8; 2200 * 2200 * 3];
     fill_block(2200, &mut data, &buf00, 0, 0);
     fill_block(2200, &mut data, &buf10, 1, 0);
@@ -124,7 +123,7 @@ pub fn combine_2x2<C>(
 where
     C: Fn(i32, i32) + 'static,
 {
-    println!("{:?} 下载2x2图片..", Local::now());
+    info!("下载2x2图片..");
     let img00 = format_url(year, month, day, hour, ten_minute / 10, 2, 0, 0);
     let img10 = format_url(year, month, day, hour, ten_minute / 10, 2, 1, 0);
     let img01 = format_url(year, month, day, hour, ten_minute / 10, 2, 0, 1);
@@ -138,7 +137,7 @@ where
     callback(4, 4);
     let (_, buf11) = download_image(&img11)?;
 
-    println!("{:?} 合成2x2图片..", Local::now());
+    info!("合成2x2图片..");
     let mut data = vec![0u8; 1100 * 1100 * 3];
     fill_block(1100, &mut data, &buf00, 0, 0);
     fill_block(1100, &mut data, &buf10, 1, 0);
@@ -158,10 +157,10 @@ where
 //取一张图片
 fn download_image(url: &str) -> Result<(OutputInfo, Vec<u8>), Box<std::error::Error>> {
     let (info, buf) = {
-        // println!("开始下载:{}", url);
+        // info!("开始下载:{}", url);
         let decoder = png::Decoder::new(reqwest::get(url)?);
         let (mut info, mut reader) = decoder.read_info()?;
-        // println!("下载完成:{} {}x{}", url, info.width, info.height);
+        // info!("下载完成:{} {}x{}", url, info.width, info.height);
         let mut buf = vec![0; info.buffer_size()];
         reader.next_frame(&mut buf)?;
         //如果是灰度图，转换成rgb
@@ -196,7 +195,7 @@ fn format_url(
 
 //在大图中填充一个550x550的图块
 fn fill_block(target_width: usize, target: &mut Vec<u8>, src: &Vec<u8>, x: usize, y: usize) {
-    // println!("组合:{}x{} src:{}", x, y, src.len());
+    // info!("组合:{}x{} src:{}", x, y, src.len());
     for (row, buf) in src.chunks(550 * 3).enumerate() {
         let i = target_width * 3 * (row + 550 * y) + 550 * 3 * x;
         if let Some(t) = target.get_mut(i..i + 550 * 3) {

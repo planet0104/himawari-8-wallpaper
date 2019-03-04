@@ -13,6 +13,8 @@ wallpaper = "*"
 lazy_static = "*"
 rust-ini = "*"
 image = "*"
+log = "*"
+env_logger = "*"
 
 [target.'cfg(not(windows))'.dependencies]
 clap = "2.32.0"

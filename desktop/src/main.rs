@@ -11,6 +11,7 @@ use std::env;
 use std::fs::create_dir;
 use std::path::{Path, PathBuf};
 extern crate wallpaper as wp;
+#[macro_use] extern crate log;
 
 const TYPE_FULL: i32 = 0; //整幅图
 const TYPE_HALF: i32 = 1; //半副图
@@ -30,6 +31,12 @@ impl Default for Config {
 }
 
 fn init_dir() -> Config {
+    let env = env_logger::Env::default()
+        .filter_or("MY_LOG_LEVEL", "info")
+        .write_style_or("MY_LOG_STYLE", "always");
+
+    env_logger::init_from_env(env);
+    
     //设置临时文件夹为当前文件夹
     let tmp_dir = {
         let mut d = env::temp_dir();
@@ -39,9 +46,9 @@ fn init_dir() -> Config {
     if !tmp_dir.exists() {
         let _ = create_dir(tmp_dir.clone());
     }
-    println!("current_dir={:?}", tmp_dir);
+    info!("current_dir={:?}", tmp_dir);
     if let Err(err) = env::set_current_dir(tmp_dir) {
-        println!("当前工作文件夹设置失败:{:?}", err);
+        info!("当前工作文件夹设置失败:{:?}", err);
     }
     //解压ico文件
     if cfg!(windows) {
@@ -54,7 +61,7 @@ fn init_dir() -> Config {
                     let _ = file.write_all(ICON);
                 }
                 Err(err) => {
-                    println!("icon.ico创建失败:{:?}", err);
+                    info!("icon.ico创建失败:{:?}", err);
                 }
             }
         }
@@ -102,16 +109,16 @@ pub extern "C" fn WinMain(
     windows::win_main(hInstance, hPrevInstance, szCmdLine, iCmdShow, init_dir())
 }
 
-// #[cfg(windows)]
-// fn main() {
-//     windows::win_main(
-//         std::ptr::null_mut(),
-//         std::ptr::null_mut(),
-//         std::ptr::null_mut(),
-//         0,
-//         init_dir(),
-//     );
-// }
+#[cfg(windows)]
+fn main() {
+    windows::win_main(
+        std::ptr::null_mut(),
+        std::ptr::null_mut(),
+        std::ptr::null_mut(),
+        0,
+        init_dir(),
+    );
+}
 
 pub fn absolute_path<P>(path: P) -> std::io::Result<PathBuf>
 where
@@ -122,6 +129,53 @@ where
         Ok(path.to_path_buf())
     } else {
         Ok(env::current_dir()?.join(path))
+    }
+}
+
+//读取完整的图片文件
+pub fn open_image(file_name: &str) -> Option<image::ImageBuffer<image::Rgb<u8>, Vec<u8>>>{
+    if let Ok(image) = image::open(file_name){
+        Some(image.to_rgb())
+    }else{
+        None
+    }
+}
+
+//保存完整的图片文件
+pub fn save_image(utc:chrono::DateTime<chrono::Utc>, file_name: &str, image:&image::ImageBuffer<image::Rgb<u8>, Vec<u8>>){
+    if let Err(err) = image.save(file_name){
+        error!("图片文件保存失败: {:?}", err);
+    }
+    
+    //删除旧的文件
+    use chrono::{Datelike, Timelike};
+    if let Ok(paths) = std::fs::read_dir("./"){
+        let cur_2d = format!(
+            "./2d_{}_{}_{}.png",
+            utc.day(),
+            utc.hour(),
+            utc.minute() / 10
+        );
+        let cur_4d = format!(
+            "./4d_{}_{}_{}.png",
+            utc.day(),
+            utc.hour(),
+            utc.minute() / 10
+        );
+        for path in paths {
+            if let Ok(path) = path{
+                let p = path.path().display().to_string();
+                if p != "./icon.ico"
+                    && p != cur_2d
+                    && p != cur_4d
+                    && p != "./wallpaper.png"
+                    && p != "./conf.ini"
+                {
+                    info!("删除文件:{}", p);
+                    let _ = std::fs::remove_file(p);
+                }
+            }
+        }
     }
 }
 
@@ -185,24 +239,24 @@ fn main() -> Result<(), Box<std::error::Error>> {
         }
     };
 
-    println!("屏幕分辨率:{}x{}", screen_width, screen_height);
+    info!("屏幕分辨率:{}x{}", screen_width, screen_height);
 
     loop {
         if conf.show_type == TYPE_HALF {
             if let Err(err) =
                 wallpaper::set_half(screen_width, screen_height, |current: i32, total: i32| {
-                    println!("下载壁纸{}/{}", current, total);
+                    info!("下载壁纸{}/{}", current, total);
                 })
             {
-                println!("壁纸下载失败:{:?}", err);
+                info!("壁纸下载失败:{:?}", err);
             }
         } else if conf.show_type == TYPE_FULL {
             if let Err(err) =
                 wallpaper::set_full(screen_width, screen_height, |current: i32, total: i32| {
-                    println!("下载壁纸{}/{}", current, total);
+                    info!("下载壁纸{}/{}", current, total);
                 })
             {
-                println!("壁纸下载失败:{:?}", err);
+                info!("壁纸下载失败:{:?}", err);
             }
         }
         //延时切换壁纸
