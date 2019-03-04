@@ -12,6 +12,17 @@ use jni::sys::{jint, jbyteArray};
 mod himawari8;
 mod wallpaper;
 
+//读取完整的图片文件
+pub fn open_image(file_name: &str) -> Option<image::ImageBuffer<image::Rgb<u8>, Vec<u8>>>{
+    info!("打开图片文件:{}", file_name);
+	None
+}
+
+//保存完整的图片文件
+pub fn save_image(utc:chrono::DateTime<chrono::Utc>, file_name: &str, image:&image::ImageBuffer<image::Rgb<u8>, Vec<u8>>){
+    info!("保存图片文件:{} {}x{}", file_name, image.width(), image.height());
+}
+
 //设置壁纸
 pub fn set_wallpaper(
     wallpaper: image::ImageBuffer<image::Rgb<u8>, Vec<u8>>,
