@@ -12,8 +12,21 @@ use jni::sys::{jint, jbyteArray};
 mod himawari8;
 mod wallpaper;
 
-pub fn set_wallpaper_from_path(path:&str){
-	info!("调用设置壁纸! {}", path);
+//设置壁纸
+pub fn set_wallpaper(
+    wallpaper: image::ImageBuffer<image::Rgb<u8>, Vec<u8>>,
+) -> Result<(), Box<std::error::Error>> {
+	info!("设置壁纸 大小{}x{}", wallpaper.width(), wallpaper.height());
+	Ok(())
+    // wallpaper.save("wallpaper.png")?;
+    // if let Some(path) = absolute_path("wallpaper.png")?.to_str() {
+    //     wp::set_from_path(path)
+    // } else {
+    //     Err(Box::new(std::io::Error::new(
+    //         std::io::ErrorKind::Other,
+    //         "壁纸设置失败",
+    //     )))
+    // }
 }
 
 //JNI加载完成

@@ -1,4 +1,4 @@
-#![no_main]
+//#![no_main]
 mod himawari8;
 mod wallpaper;
 #[cfg(windows)]
