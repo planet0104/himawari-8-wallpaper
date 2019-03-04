@@ -2,12 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="io.github.planet0104.h8w">
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.SET_WALLPAPER"/>
 
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
+        android:name=".MyApplication"
         android:theme="@style/AppTheme">
         <activity android:name=".MainActivity">
             <intent-filter>

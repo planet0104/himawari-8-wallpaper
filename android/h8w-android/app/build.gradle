@@ -19,7 +19,7 @@ android {
         testInstrumentationRunner "android.support.bg_ring.runner.AndroidJUnitRunner"
         //只使用 armeabi-v7a
         ndk {
-            abiFilters "armeabi"
+            abiFilters "armeabi","x86"
         }
     }
     ext {
