@@ -2,9 +2,7 @@ use crate::himawari8;
 use chrono::{DateTime, Datelike, Local, NaiveDateTime, Timelike, Utc};
 use image::GenericImage;
 use image::{ImageBuffer, Rgb};
-use std::env;
-use std::io;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::Mutex;
 
 const INFO_DOWNLOADING: &str = "正在下载中，请稍后";
@@ -44,11 +42,25 @@ where
 
     //删除旧的文件
     let paths = std::fs::read_dir("./")?;
-    let cur_2d = format!("./2d_{}_{}_{}.png", utc.day(), utc.hour(), utc.minute() / 10);
-    let cur_4d = format!("./4d_{}_{}_{}.png", utc.day(), utc.hour(), utc.minute() / 10);
+    let cur_2d = format!(
+        "./2d_{}_{}_{}.png",
+        utc.day(),
+        utc.hour(),
+        utc.minute() / 10
+    );
+    let cur_4d = format!(
+        "./4d_{}_{}_{}.png",
+        utc.day(),
+        utc.hour(),
+        utc.minute() / 10
+    );
     for path in paths {
         let p = path?.path().display().to_string();
-        if p != "./icon.ico" && p != cur_2d && p != cur_4d && p != "./wallpaper.png" && p != "./conf.ini"
+        if p != "./icon.ico"
+            && p != cur_2d
+            && p != cur_4d
+            && p != "./wallpaper.png"
+            && p != "./conf.ini"
         {
             println!("删除文件:{}", p);
             let _ = std::fs::remove_file(p);
@@ -139,41 +151,23 @@ where
     //拼接
     let offset_x = ((wallpaper.width() - image.width()) / 2) as usize;
     let top_border_scale = if screen_height > 1200 { 0.25 } else { 0.0 };
-    let offset_y = if cfg!(windows){
+    let offset_y = if cfg!(windows) {
         ((wallpaper.height() - image.height()) as f64 * top_border_scale) as usize
-    }else{
-        (wallpaper.height() - image.height()) as usize/2
+    } else {
+        (wallpaper.height() - image.height()) as usize / 2
     };
     let ew = image.width() as usize;
     let image = image.into_raw();
     for (y, buf) in image.chunks(ew * 3).enumerate() {
         let offset = screen_width as usize * 3 * (y + offset_y) + offset_x * 3;
-        if let Some(s) = wallpaper.get_mut(offset..offset + buf.len()){
-            if s.len() == buf.len(){
+        if let Some(s) = wallpaper.get_mut(offset..offset + buf.len()) {
+            if s.len() == buf.len() {
                 s.copy_from_slice(buf);
             }
         }
     }
 
-    wallpaper.save("wallpaper.png")?;
-    if let Some(path) = absolute_path("wallpaper.png")?.to_str(){
-        crate::set_wallpaper_from_path(path);
-        Ok(())
-    }else{
-        Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "壁纸设置失败")))
-    }
-}
-
-pub fn absolute_path<P>(path: P) -> io::Result<PathBuf>
-where
-    P: AsRef<Path>,
-{
-    let path = path.as_ref();
-    if path.is_absolute() {
-        Ok(path.to_path_buf())
-    } else {
-        Ok(env::current_dir()?.join(path))
-    }
+    crate::set_wallpaper(wallpaper)
 }
 
 //取半边, 由于半边要求地球图片不管是720p还是1080p，直径都大于1100，所以都取4x4图
@@ -213,8 +207,8 @@ where
         for (y, buf) in image.chunks(ew * 3).enumerate() {
             if (y + offset_y) < wallpaper.height() as usize {
                 let offset = screen_width as usize * 3 * (y + offset_y) + offset_x * 3;
-                if let Some(s) = wallpaper.get_mut(offset..offset + buf.len()){
-                    if s.len() == buf.len(){
+                if let Some(s) = wallpaper.get_mut(offset..offset + buf.len()) {
+                    if s.len() == buf.len() {
                         s.copy_from_slice(buf);
                     }
                 }
@@ -252,8 +246,8 @@ where
         for (y, buf) in image.chunks(ew * 3).enumerate() {
             if (y + offset_y) < wallpaper.height() as usize {
                 let offset = screen_width as usize * 3 * (y + offset_y) + offset_x * 3;
-                if let Some(s) = wallpaper.get_mut(offset..offset + buf.len()){
-                    if s.len() == buf.len(){
+                if let Some(s) = wallpaper.get_mut(offset..offset + buf.len()) {
+                    if s.len() == buf.len() {
                         s.copy_from_slice(buf);
                     }
                 }
@@ -263,11 +257,5 @@ where
         }
     };
 
-    wallpaper.save("wallpaper.png")?;
-    if let Some(path) = absolute_path("wallpaper.png")?.to_str(){
-        crate::set_wallpaper_from_path(path);
-        Ok(())
-    }else{
-        Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "壁纸设置失败")))
-    }
+    crate::set_wallpaper(wallpaper)
 }

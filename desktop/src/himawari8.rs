@@ -102,10 +102,13 @@ where
     fill_block(2200, &mut data, &buf13, 1, 3);
     fill_block(2200, &mut data, &buf23, 2, 3);
     fill_block(2200, &mut data, &buf33, 3, 3);
-    if let Some(buffer) = ImageBuffer::from_raw(2200, 2200, data){
+    if let Some(buffer) = ImageBuffer::from_raw(2200, 2200, data) {
         Ok(buffer)
-    }else{
-        Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "图片解析失败")))
+    } else {
+        Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "图片解析失败",
+        )))
     }
 }
 
@@ -142,10 +145,13 @@ where
     fill_block(1100, &mut data, &buf01, 0, 1);
     fill_block(1100, &mut data, &buf11, 1, 1);
 
-    if let Some(buffer) = ImageBuffer::from_raw(1100, 1100, data){
+    if let Some(buffer) = ImageBuffer::from_raw(1100, 1100, data) {
         Ok(buffer)
-    }else{
-        Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "图片解析失败")))
+    } else {
+        Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "图片解析失败",
+        )))
     }
 }
 
@@ -189,12 +195,12 @@ fn format_url(
 }
 
 //在大图中填充一个550x550的图块
-fn fill_block(target_width: usize, target: &mut Vec<u8>, src: &Vec<u8>, x: usize, y: usize){
+fn fill_block(target_width: usize, target: &mut Vec<u8>, src: &Vec<u8>, x: usize, y: usize) {
     // println!("组合:{}x{} src:{}", x, y, src.len());
     for (row, buf) in src.chunks(550 * 3).enumerate() {
         let i = target_width * 3 * (row + 550 * y) + 550 * 3 * x;
-        if let Some(t) = target.get_mut(i..i + 550 * 3){
-            if t.len() == buf.len(){
+        if let Some(t) = target.get_mut(i..i + 550 * 3) {
+            if t.len() == buf.len() {
                 t.copy_from_slice(buf);
             }
         }
