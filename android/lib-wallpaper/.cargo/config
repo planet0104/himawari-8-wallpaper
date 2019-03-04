@@ -5,3 +5,7 @@ linker = "arm-linux-androideabi-gcc"
 [target.armv7-linux-androideabi]
 ar = "arm-linux-androideabi-ar"
 linker = "arm-linux-androideabi-gcc"
+
+[target.i686-linux-android]
+ar = "i686-linux-android-ar"
+linker = "i686-linux-android-gcc"

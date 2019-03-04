@@ -13,6 +13,8 @@ https://dl.google.com/android/repository/android-ndk-r19b-linux-x86_64.zip
 cd ~/android-ndk-r19b/build/tools
 ./make-standalone-toolchain.sh --platform=android-16 --arch=arm --install-dir=~/ndk-standalone-16-arm --verbose
 
+./make-standalone-toolchain.sh --platform=android-16 --arch=x86 --install-dir=~/ndk-standalone-16-x86 --verbose
+
 安装必要工具
 sudo apt-get install libc6-i386 lib32z1 lib32stdc++6
 
