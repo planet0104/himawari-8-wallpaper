@@ -14,7 +14,7 @@ android_support = "*"
 chrono = "*"
 image = "*"
 png = "*"
-reqwest = "*"
+reqwest = { version = "0.9.10", default-features = false, features = ["rustls-tls"] }
 
 [lib]
 crate-type = ["cdylib"]
