@@ -6,7 +6,7 @@ edition = "2018"
 build = "build.rs"
 
 [dependencies]
-reqwest = "*"
+reqwest = { version = "0.9.10", default-features = false, features = ["rustls-tls"] }
 png = "*"
 chrono = "0.4.6"
 wallpaper = "*"

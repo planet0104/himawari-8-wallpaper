@@ -22,10 +22,10 @@ fn download<C>(
 where
     C: Fn(i32, i32) + 'static,
 {
-    if *DOWNLOADING.lock().unwrap() {
+    if *DOWNLOADING.lock()? {
         return Ok(None);
     }
-    *DOWNLOADING.lock().unwrap() = true;
+    *DOWNLOADING.lock()? = true;
     let mut timestamp = Utc::now().timestamp_millis();
     //减去20分钟
     timestamp -= 20 * 60 * 1000;
@@ -43,11 +43,11 @@ where
     );
 
     //删除旧的文件
-    let paths = std::fs::read_dir("./").unwrap();
+    let paths = std::fs::read_dir("./")?;
     let cur_2d = format!("./2d_{}_{}_{}.png", utc.day(), utc.hour(), utc.minute() / 10);
     let cur_4d = format!("./4d_{}_{}_{}.png", utc.day(), utc.hour(), utc.minute() / 10);
     for path in paths {
-        let p = path.unwrap().path().display().to_string();
+        let p = path?.path().display().to_string();
         if p != "./icon.ico" && p != cur_2d && p != cur_4d && p != "./wallpaper.png" && p != "./conf.ini"
         {
             println!("删除文件:{}", p);
@@ -61,7 +61,7 @@ where
             Local::now(),
             file_name
         );
-        *DOWNLOADING.lock().unwrap() = false;
+        *DOWNLOADING.lock()? = false;
         Ok(Some(image::open(file_name)?.to_rgb()))
     } else {
         let image = if dim == 4 {
@@ -84,7 +84,7 @@ where
             )?
         };
         image.save(file_name)?;
-        *DOWNLOADING.lock().unwrap() = false;
+        *DOWNLOADING.lock()? = false;
         Ok(Some(image))
     }
 }
@@ -132,7 +132,6 @@ where
         screen_width as u32
     };
     let image = image::imageops::resize(&image, size, size, image::FilterType::Gaussian);
-    // image.save("image.png").unwrap();
 
     let mut wallpaper: ImageBuffer<Rgb<u8>, Vec<u8>> =
         ImageBuffer::new(screen_width as u32, screen_height as u32);
@@ -149,16 +148,20 @@ where
     let image = image.into_raw();
     for (y, buf) in image.chunks(ew * 3).enumerate() {
         let offset = screen_width as usize * 3 * (y + offset_y) + offset_x * 3;
-        wallpaper
-            .get_mut(offset..offset + buf.len())
-            .unwrap()
-            .copy_from_slice(buf);
+        if let Some(s) = wallpaper.get_mut(offset..offset + buf.len()){
+            if s.len() == buf.len(){
+                s.copy_from_slice(buf);
+            }
+        }
     }
 
     wallpaper.save("wallpaper.png")?;
-    crate::set_wallpaper_from_path(absolute_path("wallpaper.png")?.to_str().unwrap());
-
-    Ok(())
+    if let Some(path) = absolute_path("wallpaper.png")?.to_str(){
+        crate::set_wallpaper_from_path(path);
+        Ok(())
+    }else{
+        Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "壁纸设置失败")))
+    }
 }
 
 pub fn absolute_path<P>(path: P) -> io::Result<PathBuf>
@@ -210,10 +213,11 @@ where
         for (y, buf) in image.chunks(ew * 3).enumerate() {
             if (y + offset_y) < wallpaper.height() as usize {
                 let offset = screen_width as usize * 3 * (y + offset_y) + offset_x * 3;
-                wallpaper
-                    .get_mut(offset..offset + buf.len())
-                    .unwrap()
-                    .copy_from_slice(buf);
+                if let Some(s) = wallpaper.get_mut(offset..offset + buf.len()){
+                    if s.len() == buf.len(){
+                        s.copy_from_slice(buf);
+                    }
+                }
             } else {
                 break;
             }
@@ -248,10 +252,11 @@ where
         for (y, buf) in image.chunks(ew * 3).enumerate() {
             if (y + offset_y) < wallpaper.height() as usize {
                 let offset = screen_width as usize * 3 * (y + offset_y) + offset_x * 3;
-                wallpaper
-                    .get_mut(offset..offset + buf.len())
-                    .unwrap()
-                    .copy_from_slice(buf);
+                if let Some(s) = wallpaper.get_mut(offset..offset + buf.len()){
+                    if s.len() == buf.len(){
+                        s.copy_from_slice(buf);
+                    }
+                }
             } else {
                 break;
             }
@@ -259,7 +264,10 @@ where
     };
 
     wallpaper.save("wallpaper.png")?;
-    crate::set_wallpaper_from_path(absolute_path("wallpaper.png")?.to_str().unwrap());
-
-    Ok(())
+    if let Some(path) = absolute_path("wallpaper.png")?.to_str(){
+        crate::set_wallpaper_from_path(path);
+        Ok(())
+    }else{
+        Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "壁纸设置失败")))
+    }
 }

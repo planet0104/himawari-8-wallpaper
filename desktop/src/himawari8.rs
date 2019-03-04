@@ -102,10 +102,11 @@ where
     fill_block(2200, &mut data, &buf13, 1, 3);
     fill_block(2200, &mut data, &buf23, 2, 3);
     fill_block(2200, &mut data, &buf33, 3, 3);
-
-    let buffer = ImageBuffer::from_raw(2200, 2200, data).unwrap();
-
-    Ok(buffer)
+    if let Some(buffer) = ImageBuffer::from_raw(2200, 2200, data){
+        Ok(buffer)
+    }else{
+        Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "图片解析失败")))
+    }
 }
 
 //合成2x2的图
@@ -141,9 +142,11 @@ where
     fill_block(1100, &mut data, &buf01, 0, 1);
     fill_block(1100, &mut data, &buf11, 1, 1);
 
-    let buffer = ImageBuffer::from_raw(1100, 1100, data).unwrap();
-
-    Ok(buffer)
+    if let Some(buffer) = ImageBuffer::from_raw(1100, 1100, data){
+        Ok(buffer)
+    }else{
+        Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "图片解析失败")))
+    }
 }
 
 //取一张图片
@@ -151,10 +154,10 @@ fn download_image(url: &str) -> Result<(OutputInfo, Vec<u8>), Box<std::error::Er
     let (info, buf) = {
         // println!("开始下载:{}", url);
         let decoder = png::Decoder::new(reqwest::get(url)?);
-        let (mut info, mut reader) = decoder.read_info().unwrap();
+        let (mut info, mut reader) = decoder.read_info()?;
         // println!("下载完成:{} {}x{}", url, info.width, info.height);
         let mut buf = vec![0; info.buffer_size()];
-        reader.next_frame(&mut buf).unwrap();
+        reader.next_frame(&mut buf)?;
         //如果是灰度图，转换成rgb
         if info.color_type == ColorType::Grayscale {
             let mut newbuf = vec![];
@@ -186,10 +189,14 @@ fn format_url(
 }
 
 //在大图中填充一个550x550的图块
-fn fill_block(target_width: usize, target: &mut Vec<u8>, src: &Vec<u8>, x: usize, y: usize) {
+fn fill_block(target_width: usize, target: &mut Vec<u8>, src: &Vec<u8>, x: usize, y: usize){
     // println!("组合:{}x{} src:{}", x, y, src.len());
     for (row, buf) in src.chunks(550 * 3).enumerate() {
         let i = target_width * 3 * (row + 550 * y) + 550 * 3 * x;
-        target.get_mut(i..i + 550 * 3).unwrap().copy_from_slice(buf);
+        if let Some(t) = target.get_mut(i..i + 550 * 3){
+            if t.len() == buf.len(){
+                t.copy_from_slice(buf);
+            }
+        }
     }
 }
