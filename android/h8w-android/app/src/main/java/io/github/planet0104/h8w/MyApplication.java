@@ -6,10 +6,12 @@ import android.content.Context;
 public class MyApplication extends Application {
 
     private static Context context;
+    public static boolean serviceRunning = false;
 
     public void onCreate() {
         super.onCreate();
         MyApplication.context = getApplicationContext();
+        PrefHelper.initHelper(this, "wallpaper");
     }
 
     public static Context getAppContext() {

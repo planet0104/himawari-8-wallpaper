@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">卫星壁纸</string>
+    <string name="action">下载并设置最新卫星壁纸</string>
+    <string name="save_to_album">自动将最新的壁纸保存到相册</string>
+    <string name="tip_half">半张图片设置为壁纸(下载4x4图)</string>
+    <string name="tip_full">整张图片设置为壁纸(下载2x2图)</string>
 </resources>
