@@ -5,7 +5,7 @@ extern crate android_logger;
 
 use jni::{JavaVM, JNIEnv};
 use jni::objects::{JObject, JClass, JValue};
-use jni::sys::jint;
+use jni::sys::{jboolean, jint};
 use std::sync::Mutex;
 use std::io::BufWriter;
 use png::HasParameters;
@@ -99,7 +99,7 @@ pub extern fn JNI_OnLoad(jvm: JavaVM, _reserved: *mut std::ffi::c_void) -> jint{
 }
 
 #[no_mangle]
-pub extern fn Java_io_github_planet0104_h8w_MainActivity_init<'a>(env: JNIEnv, _activity: JClass, activity:JObject){
+pub extern fn Java_io_github_planet0104_h8w_MainActivity_downloadAndSetWallpaper<'a>(env: JNIEnv, _activity: JClass, activity:JObject, wallpaper_type:JValue) -> jboolean{
 	info!("init..");
 	//获取屏幕宽、高
 	let (width, height) = || -> Result<(i32, i32), Box<std::error::Error>>{
@@ -108,13 +108,30 @@ pub extern fn Java_io_github_planet0104_h8w_MainActivity_init<'a>(env: JNIEnv, _
 	}().unwrap_or((720, 1280));
 	info!("壁纸大小:{}x{}", width, height);
 
-	if let Err(err) = wallpaper::set_half(
-		width,
-		height,
-		|current: i32, total: i32|{
-			info!("下载壁纸{}/{}", current, total);
-		},
-	){
-		info!("壁纸下载失败:{:?}", err);
+	let wallpaper_type = wallpaper_type.i().unwrap_or(0);
+
+	if wallpaper_type==0{
+		if let Err(err) = wallpaper::set_full(
+			width,
+			height,
+			|current: i32, total: i32|{
+				info!("下载壁纸{}/{}", current, total);
+			},
+		){
+			info!("壁纸下载失败:{:?}", err);
+			return 0;
+		}
+	}else{
+		if let Err(err) = wallpaper::set_half(
+			width,
+			height,
+			|current: i32, total: i32|{
+				info!("下载壁纸{}/{}", current, total);
+			},
+		){
+			info!("壁纸下载失败:{:?}", err);
+			return 0;
+		}
 	}
+	1
 }
