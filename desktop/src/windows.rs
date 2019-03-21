@@ -8,9 +8,11 @@ use std::path::Path;
 use std::ptr::null_mut;
 use std::sync::Mutex;
 use winapi::shared::basetsd::UINT_PTR;
-use winapi::shared::minwindef::{DWORD, HINSTANCE, LPARAM, LRESULT, UINT, WPARAM};
+use winapi::shared::minwindef::{MAX_PATH, DWORD, HINSTANCE, LPARAM, LRESULT, UINT, WPARAM};
 use winapi::shared::ntdef::LPSTR;
 use winapi::shared::windef::{HBRUSH, HICON, HMENU, HWND, POINT};
+use winapi::um::shlobj::SHGetSpecialFolderPathW;
+use winapi::um::shlobj::CSIDL_STARTUP;
 use winapi::um::shellapi::{
     ShellExecuteW, Shell_NotifyIconW, NIF_ICON, NIF_INFO, NIF_MESSAGE, NIF_TIP, NIIF_NONE, NIM_ADD,
     NIM_DELETE, NIM_MODIFY, NOTIFYICONDATAW,
@@ -23,8 +25,15 @@ use winapi::um::winuser::*;
 
 pub static APP_NAME: &str = "himawari8壁纸";
 
+static TEMPLATE:&str = r"[InternetShortcut]
+URL=--
+IconIndex=0
+IconFile=--
+";
+
 const IDR_EXIT: usize = 10;
 const IDR_HOME: usize = 20;
+const IDR_STARTUP: usize = 30;
 const IDR_TP_FULL: usize = 210;
 const IDR_TP_HALF: usize = 211;
 const IDR_FQ_10: usize = 110;
@@ -167,6 +176,14 @@ pub unsafe extern "system" fn window_proc(
             let h_menu = CreatePopupMenu();
             AppendMenuW(h_menu, MF_POPUP, fq_menu as usize, convert("更新频率"));
             AppendMenuW(h_menu, MF_POPUP, ty_menu as usize, convert("展示方式"));
+            //开机启动
+            if let Ok(run_on_startup) = is_app_registered_for_startup(APP_NAME){
+                if run_on_startup{
+                    AppendMenuW(h_menu, MF_STRING, IDR_STARTUP, convert("开机启动(已开启)"));
+                }else{
+                    AppendMenuW(h_menu, MF_STRING, IDR_STARTUP, convert("开机启动(已关闭)"));
+                }
+            }
             AppendMenuW(h_menu, MF_STRING, IDR_HOME, convert("项目主页"));
             AppendMenuW(h_menu, MF_STRING, IDR_EXIT, convert("退出"));
             *H_MENU.lock().unwrap() = h_menu as isize;
@@ -194,8 +211,9 @@ pub unsafe extern "system" fn window_proc(
                     GetCursorPos(&mut pt); //取鼠标坐标
                     SetForegroundWindow(h_wnd); //解决在菜单外单击左键菜单不消失的问题
                                                 // EnableMenuItem(hmenu,IDR_PAUSE,MF_GRAYED);//让菜单中的某一项变灰
+                    let h_menu = *H_MENU.lock().unwrap() as HMENU;
                     match TrackPopupMenu(
-                        *H_MENU.lock().unwrap() as HMENU,
+                        h_menu,
                         TPM_RETURNCMD,
                         pt.x,
                         pt.y,
@@ -218,6 +236,17 @@ pub unsafe extern "system" fn window_proc(
                                 null_mut(),
                                 SW_SHOWNORMAL,
                             );
+                        }
+                        IDR_STARTUP => {
+                            if let Ok(run_on_startup) = is_app_registered_for_startup(APP_NAME){
+                                if run_on_startup{
+                                    println!("删除启动项:{:?}", remove_app_for_startup(APP_NAME));
+                                    ModifyMenuW(h_menu, IDR_STARTUP as u32, MF_BYCOMMAND, IDR_STARTUP, convert("开机启动(已关闭)"));
+                                }else{
+                                    println!("添加启动项={:?}", register_app_for_startup(APP_NAME));
+                                    ModifyMenuW(h_menu, IDR_STARTUP as u32, MF_BYCOMMAND, IDR_STARTUP, convert("开机启动(已开启)"));
+                                }
+                            }
                         }
                         IDR_TP_FULL => {
                             let mut conf = CONFIG.lock().unwrap();
@@ -428,6 +457,39 @@ fn show_bubble(info: &str) {
             Shell_NotifyIconW(NIM_MODIFY, &mut *nid);
         }
     });
+}
+
+fn remove_app_for_startup(app_name:&str) -> Result<(), Box<std::error::Error>>{
+    let mut path:[u16; MAX_PATH+1] = [0; MAX_PATH+1];
+    unsafe{ SHGetSpecialFolderPathW(HWND_DESKTOP, path.as_mut_ptr(), CSIDL_STARTUP, 0) };
+    let path = String::from_utf16(&path)?.replace("\u{0}", "");
+    std::fs::remove_file(format!("{}\\{}.url", path, app_name))?;
+    Ok(())
+}
+
+fn register_app_for_startup(app_name:&str) -> Result<(), Box<std::error::Error>>{
+    let mut path:[u16; MAX_PATH+1] = [0; MAX_PATH+1];
+    unsafe{ SHGetSpecialFolderPathW(HWND_DESKTOP, path.as_mut_ptr(), CSIDL_STARTUP, 0) };
+    let path = String::from_utf16(&path)?.replace("\u{0}", "");
+    let url_file = format!("{}\\{}.url", path, app_name);
+    //写入url文件
+    use std::io::Write;
+    let mut file = std::fs::File::create(url_file)?;
+    let exe_path = ::std::env::current_exe()?;
+    if let Some(exe_path) = exe_path.to_str(){
+        file.write_all(TEMPLATE.replace("--", exe_path).as_bytes())?;
+        Ok(())
+    }else{
+        use std::io::{Error, ErrorKind};
+        Err(Box::new(Error::new(ErrorKind::Other, "exe路径读取失败!")))
+    }
+}
+
+fn is_app_registered_for_startup(app_name:&str) -> Result<bool, Box<std::error::Error>>{
+    let mut path:[u16; MAX_PATH+1] = [0; MAX_PATH+1];
+    unsafe{ SHGetSpecialFolderPathW(HWND_DESKTOP, path.as_mut_ptr(), CSIDL_STARTUP, 0) };
+    let path = String::from_utf16(&path)?.replace("\u{0}", "");
+    Ok(Path::new(&format!("{}\\{}.url", path, app_name)).exists())
 }
 
 pub fn convert(s: &str) -> LPCWSTR {

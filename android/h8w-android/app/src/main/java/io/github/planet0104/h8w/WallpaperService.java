@@ -1,5 +1,6 @@
 package io.github.planet0104.h8w;
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
@@ -67,7 +68,11 @@ public class WallpaperService extends Service implements Runnable, Handler.Callb
         NotificationCompat.Builder notification = new NotificationCompat.Builder(this, "channel_id");
         notification.setContentTitle("卫星壁纸");
         notification.setContentText(content);
-        notification.setPriority(NotificationCompat.PRIORITY_MIN);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            notification.setCategory(Notification.CATEGORY_SERVICE);
+            notification.setPriority(NotificationManager.IMPORTANCE_LOW);
+        }
+        notification.setOngoing(true);
         notification.setSmallIcon(R.mipmap.ic_launcher);
         notification.setChannelId(getPackageName());
         notification.setAutoCancel(true);

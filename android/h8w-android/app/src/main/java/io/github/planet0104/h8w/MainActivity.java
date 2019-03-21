@@ -190,7 +190,12 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
 
     private void startService(){
         if(!MyApplication.serviceRunning){
-            startService(new Intent(this, WallpaperService.class));
+            Intent serviceIntent = new Intent(this, WallpaperService.class);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            } else {
+                startService(serviceIntent);
+            }
             Toast.makeText(this, "开始下载壁纸", Toast.LENGTH_SHORT).show();
         }else{
             Toast.makeText(this, "正在下载壁纸", Toast.LENGTH_SHORT).show();
