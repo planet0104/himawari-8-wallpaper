@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -17,6 +18,10 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import java.util.Date;
+
+import static io.github.planet0104.h8w.MainActivity.SET_HALF;
+import static io.github.planet0104.h8w.MainActivity.SET_LAST_UPDATE_TIME;
 import static io.github.planet0104.h8w.MainActivity.downloadAndSetWallpaper;
 
 //https://developer.android.google.cn/guide/topics/ui/notifiers/notifications.html
@@ -44,7 +49,7 @@ public class WallpaperService extends Service implements Runnable, Handler.Callb
             //是否绕过请勿打扰模式
 //            channel.canBypassDnd();
             //闪光灯
-//            channel.enableLights(true);
+            channel.enableLights(false);
             //锁屏显示通知
 //            channel.setLockscreenVisibility(VISIBILITY_SECRET);
             //闪关灯的灯光颜色
@@ -52,7 +57,7 @@ public class WallpaperService extends Service implements Runnable, Handler.Callb
             //桌面launcher的消息角标
 //            channel.canShowBadge();
             //是否允许震动
-//            channel.enableVibration(true);
+            channel.enableVibration(false);
             //获取系统通知响铃声音的配置
 //            channel.getAudioAttributes();
             //获取通知取到组
@@ -70,8 +75,8 @@ public class WallpaperService extends Service implements Runnable, Handler.Callb
         notification.setContentText(content);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             notification.setCategory(Notification.CATEGORY_SERVICE);
-            notification.setPriority(NotificationManager.IMPORTANCE_LOW);
         }
+        notification.setPriority(Notification.PRIORITY_MIN);
         notification.setOngoing(true);
         notification.setSmallIcon(R.mipmap.ic_launcher);
         notification.setChannelId(getPackageName());
@@ -110,6 +115,7 @@ public class WallpaperService extends Service implements Runnable, Handler.Callb
         super.onDestroy();
         unregisterReceiver(receiver);
         MyApplication.serviceRunning = false;
+        PrefHelper.setVal(SET_LAST_UPDATE_TIME, new Date().getTime());
     }
 
     @Override
@@ -120,7 +126,7 @@ public class WallpaperService extends Service implements Runnable, Handler.Callb
 
     @Override
     public void run() {
-        int type = PrefHelper.getBooleanVal("half")?1:0;
+        int type = PrefHelper.getBooleanVal(SET_HALF)?1:0;
         if(downloadAndSetWallpaper(type)){
             Log.i(TAG, "壁纸设置成功.");
         }else{

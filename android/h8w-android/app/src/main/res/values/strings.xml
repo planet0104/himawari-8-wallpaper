@@ -1,7 +1,18 @@
 <resources>
     <string name="app_name">卫星壁纸</string>
-    <string name="action">下载并设置最新卫星壁纸</string>
+    <string name="action_download">下载壁纸</string>
+    <string name="action_start">启动任务</string>
+    <string name="download_setting">壁纸设置</string>
     <string name="save_to_album">自动将最新的壁纸保存到相册</string>
     <string name="tip_half">半张图片设置为壁纸(下载4x4图)</string>
     <string name="tip_full">整张图片设置为壁纸(下载2x2图)</string>
+    <string name="task_setting">定时设置</string>
+    <string name="auto_update">定时更新壁纸</string>
+    <string name="time_interval">时间间隔</string>
+    <string name="delay_10">10分钟</string>
+    <string name="delay_20">20分钟</string>
+    <string name="delay_30">30分钟</string>
+    <string name="delay_60">60分钟</string>
+    <string name="disable_duration">在此时间段不更新</string>
+    <string name="to">至次日</string>
 </resources>
