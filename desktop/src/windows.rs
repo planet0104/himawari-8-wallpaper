@@ -51,6 +51,7 @@ lazy_static! {
     static ref WM_TASKBAR_CREATED: UINT =
         unsafe { RegisterWindowMessageW(convert("TaskbarCreated")) };
     static ref H_MENU: Mutex<isize> = Mutex::new(0);
+    static ref TY_MENU: Mutex<isize> = Mutex::new(0);
     static ref TIMER_ID: Mutex<usize> = Mutex::new(0);
     static ref CONFIG: Mutex<Config> = Mutex::new(Config::default());
 }
@@ -169,8 +170,19 @@ pub unsafe extern "system" fn window_proc(
             AppendMenuW(fq_menu, MF_STRING, IDR_FQ_30, convert("30分钟"));
             AppendMenuW(fq_menu, MF_STRING, IDR_FQ_60, convert("1小时"));
             let ty_menu = CreatePopupMenu();
-            AppendMenuW(ty_menu, MF_STRING, IDR_TP_FULL, convert("整幅图"));
-            AppendMenuW(ty_menu, MF_STRING, IDR_TP_HALF, convert("半幅图"));
+            match CONFIG.lock().unwrap().show_type {
+                TYPE_HALF => {
+                    AppendMenuW(ty_menu, MF_STRING, IDR_TP_FULL, convert("整幅图"));
+                    AppendMenuW(ty_menu, MF_STRING, IDR_TP_HALF, convert("半幅图√"));
+                }
+                TYPE_FULL => {
+                    AppendMenuW(ty_menu, MF_STRING, IDR_TP_FULL, convert("整幅图√"));
+                    AppendMenuW(ty_menu, MF_STRING, IDR_TP_HALF, convert("半幅图"));
+                }
+                _ => (),
+            };
+            // AppendMenuW(ty_menu, MF_STRING, IDR_TP_FULL, convert("整幅图"));
+            // AppendMenuW(ty_menu, MF_STRING, IDR_TP_HALF, convert("半幅图"));
 
             //一级菜单
             let h_menu = CreatePopupMenu();
@@ -187,6 +199,7 @@ pub unsafe extern "system" fn window_proc(
             AppendMenuW(h_menu, MF_STRING, IDR_HOME, convert("项目主页"));
             AppendMenuW(h_menu, MF_STRING, IDR_EXIT, convert("退出"));
             *H_MENU.lock().unwrap() = h_menu as isize;
+            *TY_MENU.lock().unwrap() = ty_menu as isize;
 
             //启动时第一次下载
             //读取配置: 更新频率、展示方式
@@ -212,6 +225,7 @@ pub unsafe extern "system" fn window_proc(
                     SetForegroundWindow(h_wnd); //解决在菜单外单击左键菜单不消失的问题
                                                 // EnableMenuItem(hmenu,IDR_PAUSE,MF_GRAYED);//让菜单中的某一项变灰
                     let h_menu = *H_MENU.lock().unwrap() as HMENU;
+                    let ty_menu = *TY_MENU.lock().unwrap() as HMENU;
                     match TrackPopupMenu(
                         h_menu,
                         TPM_RETURNCMD,
@@ -254,6 +268,8 @@ pub unsafe extern "system" fn window_proc(
                                 conf.show_type = TYPE_FULL;
                                 switch_to_full();
                                 crate::write_config(&conf);
+                                ModifyMenuW(ty_menu, IDR_TP_FULL as u32, MF_BYCOMMAND, IDR_TP_FULL, convert("整幅图√"));
+                                ModifyMenuW(ty_menu, IDR_TP_HALF as u32, MF_BYCOMMAND, IDR_TP_HALF, convert("半幅图"));
                             }
                         }
                         IDR_TP_HALF => {
@@ -262,6 +278,8 @@ pub unsafe extern "system" fn window_proc(
                                 conf.show_type = TYPE_HALF;
                                 switch_to_half();
                                 crate::write_config(&conf);
+                                ModifyMenuW(ty_menu, IDR_TP_FULL as u32, MF_BYCOMMAND, IDR_TP_FULL, convert("整幅图"));
+                                ModifyMenuW(ty_menu, IDR_TP_HALF as u32, MF_BYCOMMAND, IDR_TP_HALF, convert("半幅图√"));
                             }
                         }
                         IDR_FQ_10 => {
