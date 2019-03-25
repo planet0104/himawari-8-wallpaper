@@ -17,6 +17,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.SystemClock;
 import android.support.annotation.RequiresPermission;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -401,19 +402,19 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
         //如果没有更新过也没有正在更新，立即更新壁纸
         if (MyApplication.serviceRunning){
             //如果正在更新，延迟更新壁纸
-            alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME, intervalMillis,intervalMillis, pi);
+            alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime()+intervalMillis,intervalMillis, pi);
             toast("下次壁纸更新"+interval+"分钟后");
         }else if(lastUpdateTime==null){ //!MyApplication.serviceRunning && lastUpdateTime==null
-            alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME, 0,intervalMillis, pi);
+            alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime(),intervalMillis, pi);
             toast("壁纸更新稍后进行");
         }else{// !MyApplication.serviceRunning && lastUpdateTime!=null
             //首次运行：更新间隔时间-(当前时间-上次更新时间)
             long dt = intervalMillis-(new Date().getTime() - lastUpdateTime.getTime());
             if(dt<0){
-                alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME, 0,intervalMillis, pi);
+                alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime(),intervalMillis, pi);
                 toast("壁纸更新稍后进行");
             }else{
-                alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME, dt,intervalMillis, pi);
+                alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime()+dt,intervalMillis, pi);
                 toast("下次壁纸更新"+(dt/60/1000)+"分钟后");
             }
         }
