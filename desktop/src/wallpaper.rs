@@ -112,8 +112,8 @@ where
         let scale = if screen_height > 1200 { 0.87 } else { 0.95 };
         (screen_height as f64 * scale) as u32
     } else {
-        //竖屏取屏幕宽度的100%作为地球边长
-        screen_width as u32
+        //竖屏取屏幕宽度的90%作为地球边长
+        (screen_width as f64 * 0.95) as u32
     };
     let image = image::imageops::resize(&image, size, size, image::FilterType::Gaussian);
 
@@ -189,29 +189,30 @@ where
             }
         }
     } else {
-        //竖屏: 地球直径取屏幕高度，上午取地球右半部分，下午取地球左半部分
+        //竖屏: 地球直径取屏幕高度(%)，上午取地球右半部分，下午取地球左半部分
         let mut image = image::imageops::resize(
             &image,
-            screen_height as u32,
-            screen_height as u32,
+            (screen_height as f64*0.95) as u32,
+            (screen_height as f64*0.95) as u32,
             image::FilterType::Nearest,
         );
 
         use chrono::Local;
         let time = Local::now();
+        let mut offset_x = 0;
         if time.hour() <= 12 {
             //取地球右半部分
-            let w = image.width() / 2;
+            let w = ((image.width() as f64 / 2.0)*1.06) as u32;
             let x = image.width() - w;
             image = image.sub_image(x, 0, w, image.height()).to_image();
         } else {
             //取地球左半部分
-            let w = image.width() / 2;
+            let w = ((image.width() as f64 / 2.0)*1.06) as u32;
             image = image.sub_image(0, 0, w, image.height()).to_image();
+            offset_x = (wallpaper.width() - image.width()) as usize;
         }
 
         //拼接
-        let offset_x = ((wallpaper.width() - image.width()) / 2) as usize;
         let offset_y = ((wallpaper.height() - image.height()) / 2) as usize;
         let ew = image.width() as usize;
         let image = image.into_raw();

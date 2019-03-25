@@ -116,7 +116,6 @@ pub extern fn Java_io_github_planet0104_h8w_MainActivity_downloadAndSetWallpaper
 			height,
 			|current: i32, total: i32|{
 				info!("下载壁纸{}/{}", current, total);
-				info!("调用openFile");
 				if let Ok(jvm) = JVM.lock(){
 					if let Ok(env) = jvm.as_ref().unwrap().attach_current_thread(){
 						if let Err(err) = env.call_static_method("io/github/planet0104/h8w/MainActivity", "notifyDownloadProgress", "(II)V", &[JValue::from(current), JValue::from(total)]){
@@ -135,6 +134,13 @@ pub extern fn Java_io_github_planet0104_h8w_MainActivity_downloadAndSetWallpaper
 			height,
 			|current: i32, total: i32|{
 				info!("下载壁纸{}/{}", current, total);
+				if let Ok(jvm) = JVM.lock(){
+					if let Ok(env) = jvm.as_ref().unwrap().attach_current_thread(){
+						if let Err(err) = env.call_static_method("io/github/planet0104/h8w/MainActivity", "notifyDownloadProgress", "(II)V", &[JValue::from(current), JValue::from(total)]){
+							error!("下载进度通知失败:{:?}", err);
+						}
+					}
+				}
 			},
 		){
 			info!("壁纸下载失败:{:?}", err);
