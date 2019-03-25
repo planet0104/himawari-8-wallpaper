@@ -9,10 +9,10 @@ import android.app.WallpaperManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -25,12 +25,13 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
-import android.widget.TimePicker;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.ByteArrayInputStream;
@@ -39,10 +40,12 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import static android.Manifest.permission.SET_WALLPAPER;
-public class MainActivity extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener, RadioGroup.OnCheckedChangeListener, AdapterView.OnItemSelectedListener {
+public class MainActivity extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener, RadioGroup.OnCheckedChangeListener, AdapterView.OnItemSelectedListener, View.OnClickListener {
     final static int REQ_SET_WALLPAPER = 110;
     final static int REQ_SAVE_WALLPAPER = 111;
 
@@ -61,8 +64,15 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
     private RadioButton cb_delay_30;
     private RadioButton cb_delay_60;
     private CheckBox cb_disable;
+    private CheckBox cb_auto_update;
     private Spinner sp_start;
     private Spinner sp_end;
+    private TextView tv_last_update_time;
+    /**
+     * 下载壁纸或者启动服务
+     */
+    private Button btn_start;
+    private TextView tv_to;
 
     //https://www.jb51.net/article/133638.htm
 
@@ -198,7 +208,11 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        CheckBox cb_auto_update = findViewById(R.id.cb_auto_update);
+        tv_last_update_time = findViewById(R.id.tv_last_update_time);
+        tv_to = findViewById(R.id.tv_to);
+        btn_start = findViewById(R.id.btn_start);
+        btn_start.setOnClickListener(this);
+        cb_auto_update = findViewById(R.id.cb_auto_update);
         chk_save_to_album = findViewById(R.id.chk_save_to_album);
         RadioGroup rg_type = findViewById(R.id.rg_type);
 
@@ -207,14 +221,21 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
                 switch(rg_interval.getCheckedRadioButtonId()){
-                    case R.id.cb_delay_10: updateInterval(10); break;
-                    case R.id.cb_delay_20: updateInterval(20); break;
-                    case R.id.cb_delay_30: updateInterval(30); break;
-                    case R.id.cb_delay_60: updateInterval(60); break;
+                    case R.id.cb_delay_10:
+                        updateInterval(10);
+                        break;
+                    case R.id.cb_delay_20:
+                        updateInterval(20);
+                        break;
+                    case R.id.cb_delay_30:
+                        updateInterval(30);
+                        break;
+                    case R.id.cb_delay_60:
+                        updateInterval(60);
+                        break;
                 }
             }
         });
-
 
         cb_disable = findViewById(R.id.cb_disable);
         cb_disable.setOnCheckedChangeListener(this);
@@ -262,38 +283,18 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
             PrefHelper.setVal(SET_UPDATE_INTERVAL, 60);
         }
         switch (minutes){
-            case 10: rg_interval.check(R.id.cb_delay_10); break;
-            case 20: rg_interval.check(R.id.cb_delay_20); break;
-            case 30: rg_interval.check(R.id.cb_delay_30); break;
-            case 60: rg_interval.check(R.id.cb_delay_60); break;
-        }
-    }
-
-    private void startService(){
-        if(!MyApplication.serviceRunning){
-            Intent serviceIntent = new Intent(this, WallpaperService.class);
-            startService(serviceIntent);
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//                startForegroundService(serviceIntent);
-//            } else {
-//                startService(serviceIntent);
-//            }
-            Toast.makeText(this, "开始下载壁纸", Toast.LENGTH_SHORT).show();
-        }else{
-            Toast.makeText(this, "正在下载壁纸", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    public void doAction(View v){
-        if(Build.VERSION.SDK_INT>=23){
-            int hasSetWallpaperPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.SET_WALLPAPER);
-            if (hasSetWallpaperPermission ==  PackageManager.PERMISSION_GRANTED) {
-                startService();
-            }else{
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SET_WALLPAPER}, REQ_SET_WALLPAPER);
-            }
-        }else{
-            startService();
+            case 10:
+                rg_interval.check(R.id.cb_delay_10);
+                break;
+            case 20:
+                rg_interval.check(R.id.cb_delay_20);
+                break;
+            case 30:
+                rg_interval.check(R.id.cb_delay_30);
+                break;
+            case 60:
+                rg_interval.check(R.id.cb_delay_60);
+                break;
         }
     }
 
@@ -307,7 +308,7 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
             }
         }else if (requestCode == REQ_SET_WALLPAPER){
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                startService();
+                btn_start.setEnabled(true);
             }else{
                 AlertDialog dialog = new AlertDialog.Builder(this)
                         .setMessage("请允许程序设置手机壁纸")
@@ -325,6 +326,126 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
         }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        //检查设置壁纸权限
+        btn_start.setEnabled(false);
+        if(Build.VERSION.SDK_INT>=23){
+            int hasSetWallpaperPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.SET_WALLPAPER);
+            if (hasSetWallpaperPermission ==  PackageManager.PERMISSION_GRANTED) {
+                btn_start.setEnabled(true);
+            }else{
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SET_WALLPAPER}, REQ_SET_WALLPAPER);
+            }
+        }else{
+            btn_start.setEnabled(true);
+        }
+
+        if(cb_auto_update.isChecked()){
+            if(isAutoUpdateServiceRunning()){
+                btn_start.setText(R.string.action_stop);
+            }else{
+                btn_start.setText(R.string.action_start);
+            }
+        }
+
+        long val = PrefHelper.getLongVal(SET_LAST_UPDATE_TIME);
+        if(val>0){
+            Date lastUpdateTime = new Date(val);
+            tv_last_update_time.setText(new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(lastUpdateTime));
+        }else{
+            tv_last_update_time.setText("--");
+        }
+    }
+
+    /**
+     * 检查自动更新服务是否正在运行
+     */
+    private boolean isAutoUpdateServiceRunning(){
+        final PendingIntent pi = PendingIntent.getService(this, 100, new Intent(this, WallpaperService.class), PendingIntent.FLAG_NO_CREATE);
+        return pi != null;
+    }
+
+    /**
+     * 结束自动更新服务
+     */
+    private void stopAutoUpdateService(){
+        if(isAutoUpdateServiceRunning()){
+            final PendingIntent pi = PendingIntent.getService(this, 100, new Intent(this, WallpaperService.class), PendingIntent.FLAG_CANCEL_CURRENT);
+            AlarmManager alarmManager = (AlarmManager) getSystemService(Service.ALARM_SERVICE);
+            alarmManager.cancel(pi);//important
+            pi.cancel();//important
+            btn_start.setText(R.string.action_start);
+            toast("自动更新已停止");
+        }
+    }
+
+    /**
+     * 启动自动更新壁纸服务
+     */
+    private void startAutoUpdateService(){
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Service.ALARM_SERVICE);
+        final PendingIntent pi = PendingIntent.getService(this, 100, new Intent(this, WallpaperService.class), PendingIntent.FLAG_CANCEL_CURRENT);
+
+        int interval = PrefHelper.getIntVal(SET_UPDATE_INTERVAL);
+        //获取上次更新时间
+        Date lastUpdateTime = null;
+        long val = PrefHelper.getLongVal(SET_LAST_UPDATE_TIME);
+        if(val>0){
+            lastUpdateTime = new Date(val);
+        }
+
+        int intervalMillis = interval*60*1000;
+
+        //如果没有更新过也没有正在更新，立即更新壁纸
+        if (MyApplication.serviceRunning){
+            //如果正在更新，延迟更新壁纸
+            alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME, intervalMillis,intervalMillis, pi);
+            toast("下次壁纸更新"+interval+"分钟后");
+        }else if(lastUpdateTime==null){ //!MyApplication.serviceRunning && lastUpdateTime==null
+            alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME, 0,intervalMillis, pi);
+            toast("壁纸更新稍后进行");
+        }else{// !MyApplication.serviceRunning && lastUpdateTime!=null
+            //首次运行：更新间隔时间-(当前时间-上次更新时间)
+            long dt = intervalMillis-(new Date().getTime() - lastUpdateTime.getTime());
+            if(dt<0){
+                alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME, 0,intervalMillis, pi);
+                toast("壁纸更新稍后进行");
+            }else{
+                alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME, dt,intervalMillis, pi);
+                toast("下次壁纸更新"+(dt/60/1000)+"分钟后");
+            }
+        }
+        btn_start.setText(R.string.action_stop);
+    }
+
+    private void toast(String s){
+        Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * 下载并设置最新壁纸
+     */
+    private void downloadWallpaper(){
+        if(!MyApplication.serviceRunning){
+            Intent serviceIntent = new Intent(this, WallpaperService.class);
+            startService(serviceIntent);
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//                startForegroundService(serviceIntent);
+//            } else {
+//                startService(serviceIntent);
+//            }
+            Toast.makeText(this, "开始下载壁纸", Toast.LENGTH_SHORT).show();
+        }else{
+            Toast.makeText(this, "正在下载壁纸", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * 设置定时更新壁纸开关以及状态
+     * @param isChecked 选中:开 未选中:关
+     */
     private void setAutoUpdate(boolean isChecked){
         cb_delay_10.setEnabled(isChecked);
         cb_delay_20.setEnabled(isChecked);
@@ -335,26 +456,19 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
 
         PrefHelper.setVal(SET_AUTO_UPDATE, isChecked);
 
-        AlarmManager alarmManager = (AlarmManager) getSystemService(Service.ALARM_SERVICE);
-        Intent intent = new Intent(this, WallpaperService.class);
-        final PendingIntent pi = PendingIntent.getService(this, 0, intent, 0);
         if(isChecked){
-            int interval = PrefHelper.getIntVal(SET_UPDATE_INTERVAL);
-            //获取上次更新时间
-            Date lastUpdateTime = null;
-            long val = PrefHelper.getLongVal(SET_LAST_UPDATE_TIME);
-            if(val>0){
-                lastUpdateTime = new Date(val);
+            if(isAutoUpdateServiceRunning()){
+                btn_start.setText(R.string.action_stop);
+            }else{
+                btn_start.setText(R.string.action_start);
             }
-
-            //如果没有更新过也没有正在更新，立即更新壁纸
-            if(!MyApplication.serviceRunning && lastUpdateTime==null){
-                alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME, 0,interval*60*1000, pi);
-            }
-
+            tv_to.setTextColor(Color.parseColor("#ff333333"));
         }else{
+            stopAutoUpdateService();
+            btn_start.setText(R.string.action_download);
             sp_end.setEnabled(false);
             sp_start.setEnabled(false);
+            tv_to.setTextColor(Color.parseColor("#ffb0b7b3"));
         }
     }
 
@@ -362,7 +476,7 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
      * 获取不更新时间区间
      * @return
      */
-    private int[] getPeriodTime(){
+    public static int[] getPeriodTime(){
         int[] arr = new int[]{20, 6};
         String t = PrefHelper.getStringVal(SET_DISABLE_PERIOD_TIME);
         if(t != null && t.length()>0){
@@ -378,7 +492,7 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
      * @param start
      * @param end
      */
-    private void setPeriodTime(int start, int end){
+    public static void setPeriodTime(int start, int end){
         PrefHelper.setVal(SET_DISABLE_PERIOD_TIME, start+"-"+end);
     }
 
@@ -395,7 +509,14 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
 
     //更新定时器时间间隔
     private void updateInterval(int minutes){
-        PrefHelper.setVal(SET_UPDATE_INTERVAL, minutes);
+        int oldMinutes = PrefHelper.getIntVal(SET_UPDATE_INTERVAL);
+        if(oldMinutes != minutes){
+            PrefHelper.setVal(SET_UPDATE_INTERVAL, minutes);
+            //如果已经开启，那么重新启动服务
+            if(isAutoUpdateServiceRunning()){
+                startAutoUpdateService();
+            }
+        }
     }
 
     @Override
@@ -447,5 +568,28 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
     @Override
     public void onNothingSelected(AdapterView<?> parent) {
 
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case  R.id.btn_start:
+                if(cb_auto_update.isChecked()){
+                    if(isAutoUpdateServiceRunning()){
+                        stopAutoUpdateService();
+                    }else{
+                        startAutoUpdateService();
+                    }
+                }else{
+                    downloadWallpaper();
+                }
+                break;
+        }
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        Log.d(TAG, "Activity结束!");
     }
 }

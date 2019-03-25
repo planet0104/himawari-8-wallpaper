@@ -11,7 +11,22 @@
         android:layout_height="wrap_content"
         android:paddingTop="20dp"
         android:orientation="vertical">
-
+        <TextView
+            android:textSize="16sp"
+            android:text="@string/last_update"
+            android:gravity="center"
+            android:textColor="#2db74c"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+        <TextView
+            android:textColor="#2db74c"
+            android:gravity="center"
+            android:textSize="28sp"
+            android:text=""
+            android:id="@+id/tv_last_update_time"
+            android:paddingBottom="10sp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
         <TextView style="@style/setting_group_title" android:text="@string/download_setting" />
         <LinearLayout style="@style/setting_group">
             <CheckBox
@@ -74,7 +89,6 @@
                     android:background="@color/colorWhite"
                     android:text="@string/delay_60"
                     android:layout_width="match_parent"
-                    android:checked="true"
                     android:layout_height="wrap_content" />
             </RadioGroup>
             <LinearLayout
@@ -99,6 +113,7 @@
                         android:layout_width="85dp"
                         android:layout_height="wrap_content" />
                     <TextView
+                        android:id="@+id/tv_to"
                         android:textColor="#333"
                         android:text="@string/to"
                         android:layout_marginLeft="-15dp"
@@ -116,9 +131,17 @@
         </LinearLayout>
 
         <Button
+            android:id="@+id/btn_start"
             android:text="@string/action_download"
-            android:onClick="doAction"
             android:layout_margin="10dip"
+            android:enabled="false"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+        <TextView
+            android:textSize="12sp"
+            android:text="@string/kill_tip"
+            android:gravity="center"
+            android:textColor="#ccc"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
     </LinearLayout>

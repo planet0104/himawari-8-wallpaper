@@ -8,7 +8,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -18,11 +17,13 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import java.util.Calendar;
 import java.util.Date;
 
 import static io.github.planet0104.h8w.MainActivity.SET_HALF;
 import static io.github.planet0104.h8w.MainActivity.SET_LAST_UPDATE_TIME;
 import static io.github.planet0104.h8w.MainActivity.downloadAndSetWallpaper;
+import static io.github.planet0104.h8w.MainActivity.getPeriodTime;
 
 //https://developer.android.google.cn/guide/topics/ui/notifiers/notifications.html
 //https://www.jianshu.com/p/b83fc1697232
@@ -33,6 +34,7 @@ public class WallpaperService extends Service implements Runnable, Handler.Callb
     NotificationManager mNotificationManager;
     Handler mHandler;
     final int NOTIFY_ID = 2019;
+    boolean valid = true;
 
     private NotificationManager getNotificationManager() {
         if (mNotificationManager == null) {
@@ -45,7 +47,7 @@ public class WallpaperService extends Service implements Runnable, Handler.Callb
     private NotificationCompat.Builder getNotificationBuilder(String content) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(getPackageName(), TAG,
-                    NotificationManager.IMPORTANCE_MIN);
+                    NotificationManager.IMPORTANCE_LOW);
             //是否绕过请勿打扰模式
 //            channel.canBypassDnd();
             //闪光灯
@@ -103,51 +105,72 @@ public class WallpaperService extends Service implements Runnable, Handler.Callb
     @Override
     public void onCreate() {
         super.onCreate();
-        MyApplication.serviceRunning = true;
-        Log.d(TAG, "服务创建 NOTIFY_ID="+NOTIFY_ID);
-        mHandler = new Handler(this);
-        registerReceiver(receiver, new IntentFilter("progress"));
-        getNotificationManager().notify(TAG,NOTIFY_ID, getNotificationBuilder("正在更新壁纸").build());
+        Log.d(TAG, "WallpaperService onCreate()");
+
+        int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+        int[] periodTime = getPeriodTime();
+        if(hour>periodTime[0] || hour<periodTime[1]){
+            valid = false;
+        }
+        if(valid){
+            mHandler = new Handler(this);
+            registerReceiver(receiver, new IntentFilter("progress"));
+            getNotificationManager().notify(TAG,NOTIFY_ID, getNotificationBuilder("正在更新壁纸").build());
+        }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(receiver);
-        MyApplication.serviceRunning = false;
-        PrefHelper.setVal(SET_LAST_UPDATE_TIME, new Date().getTime());
+        Log.d(TAG, "WallpaperService onDestroy()");
+        if(valid) {
+            unregisterReceiver(receiver);
+            MyApplication.serviceRunning = false;
+            PrefHelper.setVal(SET_LAST_UPDATE_TIME, new Date().getTime());
+        }
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        new Thread(this).start();
+        if(valid) {
+            Log.d(TAG, "WallpaperService onStartCommand()");
+            if(!MyApplication.serviceRunning){
+                MyApplication.serviceRunning = true;
+                new Thread(this).start();
+            }
+        }
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public void run() {
-        int type = PrefHelper.getBooleanVal(SET_HALF)?1:0;
-        if(downloadAndSetWallpaper(type)){
-            Log.i(TAG, "壁纸设置成功.");
-        }else{
-            Log.e(TAG, "壁纸设置失败!");
+        if(valid) {
+            Log.d(TAG, "WallpaperService run()");
+            int type = PrefHelper.getBooleanVal(SET_HALF)?1:0;
+            if(downloadAndSetWallpaper(type)){
+                Log.i(TAG, "壁纸设置成功.");
+            }else{
+                Log.e(TAG, "壁纸设置失败!");
+            }
+            mHandler.sendEmptyMessage(0);
         }
-        mHandler.sendEmptyMessage(0);
     }
 
     @Override
     public boolean handleMessage(Message message) {
-        Log.d(TAG, "删除通知..");
-        getNotificationManager().notify(TAG,NOTIFY_ID, getNotificationBuilder("壁纸更新完成").build());
-        mHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                //删除通知
-                getNotificationManager().cancel(NOTIFY_ID);
-                getNotificationManager().cancelAll();
-                stopSelf();
-            }
-        }, 1000);
+        if(valid) {
+            Log.d(TAG, "WallpaperService handleMessage()");
+            getNotificationManager().notify(TAG,NOTIFY_ID, getNotificationBuilder("壁纸更新完成").build());
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    //删除通知
+                    getNotificationManager().cancel(NOTIFY_ID);
+                    getNotificationManager().cancelAll();
+                    stopSelf();
+                }
+            }, 1000);
+        }
         return true;
     }
 }
