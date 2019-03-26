@@ -4,15 +4,16 @@
 
 Android运行截图如下：
 
-[上午4点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/am4.png)
-[上午6点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/am6.png)
-[上午8点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/am8.png)
-[中午12点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm12.png)
-[下午3点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm15.png)
-[傍晚6点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm18.png)
-[晚上8点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm20.png)
+[上午4点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/am4.png)  
+[上午6点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/am6.png)  
+[上午8点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/am8.png)  
+[中午12点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm12.png)  
+[下午3点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm15.png)  
+[傍晚6点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm18.png)  
+[晚上8点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm20.png)  
 
 下载地址:
+
 [1.0.0 Android](https://raw.githubusercontent.com/planet0104/himawari-8-wallpaper/master/himawari-8-wallpaper.apk)  
 [1.0.0 Windows 64位](https://raw.githubusercontent.com/planet0104/himawari-8-wallpaper/master/himawari-8-wallpaper.exe)  
 [1.0.0 Linux 64位](https://raw.githubusercontent.com/planet0104/himawari-8-wallpaper/master/himawari-8-wallpaper)  
