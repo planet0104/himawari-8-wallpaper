@@ -2,6 +2,12 @@
 
 苏轼在诗句“人有悲欢离合，月有阴晴圆缺”中描述了月相变化，如果他当时能在人造卫星上旅游一遭，看到地球的阴晴圆缺会发出怎样的感慨呢？
 
+下载地址:
+
+[1.0.0 Android](https://raw.githubusercontent.com/planet0104/himawari-8-wallpaper/master/himawari-8-wallpaper.apk)  
+[1.0.0 Windows 64位](https://raw.githubusercontent.com/planet0104/himawari-8-wallpaper/master/himawari-8-wallpaper.exe)  
+[1.0.0 Linux 64位](https://raw.githubusercontent.com/planet0104/himawari-8-wallpaper/master/himawari-8-wallpaper)  
+
 Android运行截图如下：
 
 ![上午4点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/am4.png)  
@@ -11,12 +17,6 @@ Android运行截图如下：
 ![下午3点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm15.png)  
 ![傍晚6点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm18.png)  
 ![晚上8点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm20.png)  
-
-下载地址:
-
-[1.0.0 Android](https://raw.githubusercontent.com/planet0104/himawari-8-wallpaper/master/himawari-8-wallpaper.apk)  
-[1.0.0 Windows 64位](https://raw.githubusercontent.com/planet0104/himawari-8-wallpaper/master/himawari-8-wallpaper.exe)  
-[1.0.0 Linux 64位](https://raw.githubusercontent.com/planet0104/himawari-8-wallpaper/master/himawari-8-wallpaper)  
 
 
 Himawari 8是日本的气象卫星，[卫星官网](http://himawari8.nict.go.jp/himawari8-image.htm)的图片每隔10分钟更新一次。himawari-8-wallpaper可自动下载卫星照片并设置为桌面壁纸。
