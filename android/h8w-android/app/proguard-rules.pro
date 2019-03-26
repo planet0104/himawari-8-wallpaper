@@ -30,3 +30,11 @@
 -keep class MTT.ThirdAppInfoNew {
     *;
 }
+
+-keep class io.github.planet0104.h8w.MainActivity {
+    *;
+}
+
+-keep public class * extends android.app.Activity
+-keep public class * extends android.app.Appliction
+-keep public class * extends android.app.Service
