@@ -12,26 +12,23 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemClock;
+import android.support.annotation.NonNull;
 import android.support.annotation.RequiresPermission;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -46,7 +43,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import static android.Manifest.permission.SET_WALLPAPER;
-public class MainActivity extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener, RadioGroup.OnCheckedChangeListener, AdapterView.OnItemSelectedListener, View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener, RadioGroup.OnCheckedChangeListener, View.OnClickListener {
     final static int REQ_SET_WALLPAPER = 110;
     final static int REQ_SAVE_WALLPAPER = 111;
 
@@ -54,8 +51,6 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
     static final String SET_HALF = "half";                  //下载整张图还是半张图 boolean
     static final String SET_AUTO_UPDATE = "auto";           //是否自动更新 boolean
     static final String SET_UPDATE_INTERVAL = "interval";   //更新间隔 number
-    static final String SET_DISABLE_PERIOD = "disable";     //禁止在某时间段不更新 boolean
-    static final String SET_DISABLE_PERIOD_TIME = "disable-time"; //不更新时间段 [20,6]
     static final String SET_LAST_UPDATE_TIME = "last_update_time"; //上次更新时间 long
 
     private CheckBox chk_save_to_album;
@@ -64,16 +59,12 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
     private RadioButton cb_delay_20;
     private RadioButton cb_delay_30;
     private RadioButton cb_delay_60;
-    private CheckBox cb_disable;
     private CheckBox cb_auto_update;
-    private Spinner sp_start;
-    private Spinner sp_end;
     private TextView tv_last_update_time;
     /**
      * 下载壁纸或者启动服务
      */
     private Button btn_start;
-    private TextView tv_to;
 
     //https://www.jb51.net/article/133638.htm
 
@@ -95,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
     /**
      * 下载并设置壁纸
      * @param type 0整张,1半张
-     * @return
+     * @return bool
      */
     public static native boolean downloadAndSetWallpaper(int type);
 
@@ -210,7 +201,6 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         tv_last_update_time = findViewById(R.id.tv_last_update_time);
-        tv_to = findViewById(R.id.tv_to);
         btn_start = findViewById(R.id.btn_start);
         btn_start.setOnClickListener(this);
         cb_auto_update = findViewById(R.id.cb_auto_update);
@@ -238,16 +228,10 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
             }
         });
 
-        cb_disable = findViewById(R.id.cb_disable);
-        cb_disable.setOnCheckedChangeListener(this);
         cb_delay_10 = findViewById(R.id.cb_delay_10);
         cb_delay_20 = findViewById(R.id.cb_delay_20);
         cb_delay_30 = findViewById(R.id.cb_delay_30);
         cb_delay_60 = findViewById(R.id.cb_delay_60);
-        sp_start = findViewById(R.id.sp_start);
-        sp_end = findViewById(R.id.sp_end);
-        sp_start.setOnItemSelectedListener(this);
-        sp_end.setOnItemSelectedListener(this);
 
         cb_auto_update.setChecked(PrefHelper.getBooleanVal(SET_AUTO_UPDATE));
         setAutoUpdate(cb_auto_update.isChecked());
@@ -263,19 +247,6 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
         }else{
             rg_type.check(R.id.rb_full);
         }
-
-
-        //--------- 不更新时间段设置 ----------------
-        String[] hours = new String[24];
-        for(int i=0;i<24; i++){
-            hours[i] = i+"时";
-        }
-        ArrayAdapter adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, hours);
-        sp_start.setAdapter(adapter);
-        sp_end.setAdapter(adapter);
-        int[] t = getPeriodTime();
-        sp_start.setSelection(t[0]);
-        sp_end.setSelection(t[1]);
 
         //------------ 更新时间间隔 -------------
         int minutes = PrefHelper.getIntVal(SET_UPDATE_INTERVAL);
@@ -300,7 +271,7 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if(requestCode == REQ_SAVE_WALLPAPER){
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
                 PrefHelper.setVal(SET_SAVE, true);
@@ -452,8 +423,6 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
         cb_delay_20.setEnabled(isChecked);
         cb_delay_30.setEnabled(isChecked);
         cb_delay_60.setEnabled(isChecked);
-        cb_disable.setEnabled(isChecked);
-        setDisablePeriod(PrefHelper.getBooleanVal(SET_DISABLE_PERIOD));
 
         PrefHelper.setVal(SET_AUTO_UPDATE, isChecked);
 
@@ -463,49 +432,10 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
             }else{
                 btn_start.setText(R.string.action_start);
             }
-            tv_to.setTextColor(Color.parseColor("#ff333333"));
         }else{
             stopAutoUpdateService();
             btn_start.setText(R.string.action_download);
-            sp_end.setEnabled(false);
-            sp_start.setEnabled(false);
-            tv_to.setTextColor(Color.parseColor("#ffb0b7b3"));
         }
-    }
-
-    /**
-     * 获取不更新时间区间
-     * @return
-     */
-    public static int[] getPeriodTime(){
-        int[] arr = new int[]{20, 6};
-        String t = PrefHelper.getStringVal(SET_DISABLE_PERIOD_TIME);
-        if(t != null && t.length()>0){
-            String[] a = t.split("-");
-            arr[0] = Integer.valueOf(a[0]);
-            arr[1] = Integer.valueOf(a[1]);
-        }
-        return arr;
-    }
-
-    /**
-     * 设置不更新时间段
-     * @param start
-     * @param end
-     */
-    public static void setPeriodTime(int start, int end){
-        PrefHelper.setVal(SET_DISABLE_PERIOD_TIME, start+"-"+end);
-    }
-
-    /**
-     *
-     * @param disable true: 禁止在某区间不更新 false:允许在指定时间段不更新
-     */
-    private void setDisablePeriod(boolean disable){
-        cb_disable.setChecked(!disable);
-        sp_start.setEnabled(!disable);
-        sp_end.setEnabled(!disable);
-        PrefHelper.setVal(SET_DISABLE_PERIOD, disable);
     }
 
     //更新定时器时间间隔
@@ -522,9 +452,7 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
 
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        if(buttonView.getId() == R.id.cb_disable){
-            setDisablePeriod(!isChecked);
-        }else if(buttonView.getId() == R.id.cb_auto_update){
+        if(buttonView.getId() == R.id.cb_auto_update){
             setAutoUpdate(isChecked);
         }else if(buttonView.getId() == R.id.chk_save_to_album){
             if(isChecked){
@@ -552,23 +480,6 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
         }else{
             PrefHelper.setVal(SET_HALF, true);
         }
-    }
-
-    @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        switch (parent.getId()){
-            case R.id.sp_start:
-                setPeriodTime(position, sp_end.getSelectedItemPosition());
-                break;
-            case R.id.sp_end:
-                setPeriodTime(sp_start.getSelectedItemPosition(), position);
-                break;
-        }
-    }
-
-    @Override
-    public void onNothingSelected(AdapterView<?> parent) {
-
     }
 
     @Override
