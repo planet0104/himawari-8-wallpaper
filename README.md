@@ -4,13 +4,13 @@
 
 Android运行截图如下：
 
-![上午4点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/am4.png)  {:width:"300px"}
-![上午6点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/am6.png)  {:width:"300px"}
-![上午8点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/am8.png)  {:width:"300px"}
-![中午12点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm12.png)  {:width:"300px"}
-![下午3点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm15.png)  {:width:"300px"}
-![傍晚6点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm18.png)  {:width:"300px"}
-![晚上8点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm20.png)  {:width:"300px"}
+![上午4点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/am4.png){:width:"300px"}
+![上午6点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/am6.png){:width:"300px"}
+![上午8点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/am8.png){:width:"300px"}
+![中午12点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm12.png){:width:"300px"}
+![下午3点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm15.png){:width:"300px"}
+![傍晚6点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm18.png){:width:"300px"}
+![晚上8点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm20.png){:width:"300px"}
 
 下载地址:
 
