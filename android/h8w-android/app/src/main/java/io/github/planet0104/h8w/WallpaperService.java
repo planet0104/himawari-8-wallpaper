@@ -126,7 +126,6 @@ public class WallpaperService extends Service implements Runnable, Handler.Callb
         if(valid) {
             unregisterReceiver(receiver);
             MyApplication.serviceRunning = false;
-            PrefHelper.setVal(SET_LAST_UPDATE_TIME, new Date().getTime());
         }
     }
 
@@ -149,6 +148,7 @@ public class WallpaperService extends Service implements Runnable, Handler.Callb
             int type = PrefHelper.getBooleanVal(SET_HALF)?1:0;
             if(downloadAndSetWallpaper(type)){
                 Log.i(TAG, "壁纸设置成功.");
+                PrefHelper.setVal(SET_LAST_UPDATE_TIME, new Date().getTime());
             }else{
                 Log.e(TAG, "壁纸设置失败!");
             }
