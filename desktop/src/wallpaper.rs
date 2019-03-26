@@ -16,14 +16,10 @@ lazy_static! {
 fn download<C>(
     dim: i32,
     callback: C,
-) -> Result<Option<ImageBuffer<Rgb<u8>, Vec<u8>>>, Box<std::error::Error>>
+) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>, Box<std::error::Error>>
 where
     C: Fn(i32, i32) + 'static,
 {
-    if *DOWNLOADING.lock()? {
-        return Ok(None);
-    }
-    *DOWNLOADING.lock()? = true;
     let mut timestamp = Utc::now().timestamp_millis();
     //减去20分钟
     timestamp -= 20 * 60 * 1000;
@@ -45,8 +41,7 @@ where
             "文件已存在 直接返回{}",
             file_name
         );
-        *DOWNLOADING.lock()? = false;
-        Ok(Some(image))
+        Ok(image)
     } else {
         let image = if dim == 4 {
             himawari8::combine_4x4(
@@ -68,8 +63,7 @@ where
             )?
         };
         crate::save_image(utc, &file_name, &image);
-        *DOWNLOADING.lock()? = false;
-        Ok(Some(image))
+        Ok(image)
     }
 }
 
@@ -94,16 +88,24 @@ where
        如果屏幕宽度小于1200，下载2x2图
        如果屏幕宽度大于1200，下载4x4图
     */
-    let image = if std::cmp::min(screen_width, screen_height) < 1200 {
-        download(2, callback)?
-    } else {
-        download(4, callback)?
-    };
-    if image.is_none() {
-        info!("{}", INFO_DOWNLOADING);
-        return Ok(());
+
+    if *DOWNLOADING.lock()? {
+        error!("{}", INFO_DOWNLOADING);
+        return Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            INFO_DOWNLOADING,
+        )));
     }
-    let image = image.unwrap();
+    *DOWNLOADING.lock()? = true;
+
+    let result = if std::cmp::min(screen_width, screen_height) < 1200 {
+        download(2, callback)
+    } else {
+        download(4, callback)
+    };
+    *DOWNLOADING.lock()? = false;
+    
+    let image = result?;
 
     //缩放
     let size = if screen_height < screen_width {
@@ -150,13 +152,21 @@ pub fn set_half<C>(
 ) -> Result<(), Box<std::error::Error>>
 where
     C: Fn(i32, i32) + 'static,
-{
-    let image = download(4, callback)?;
-    if image.is_none() {
-        info!("{}", INFO_DOWNLOADING);
-        return Ok(());
+{   
+
+
+    if *DOWNLOADING.lock()? {
+        error!("{}", INFO_DOWNLOADING);
+        return Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            INFO_DOWNLOADING,
+        )));
     }
-    let image = image.unwrap();
+    *DOWNLOADING.lock()? = true;
+    let result = download(4, callback);
+    *DOWNLOADING.lock()? = false;
+
+    let image = result?;
 
     let mut wallpaper: ImageBuffer<Rgb<u8>, Vec<u8>> =
         ImageBuffer::new(screen_width as u32, screen_height as u32);
