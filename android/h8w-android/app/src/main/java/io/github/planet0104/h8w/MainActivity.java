@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Point;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -22,8 +23,10 @@ import android.support.annotation.RequiresPermission;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -92,14 +95,28 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
 
     @SuppressWarnings("unused")
     public static int getScreenWidth(){
-        Log.d(TAG, "屏幕宽度:"+MyApplication.getAppContext().getResources().getDisplayMetrics().widthPixels);
-        return MyApplication.getAppContext().getResources().getDisplayMetrics().widthPixels;
+        int widthPixels = MyApplication.getAppContext().getResources().getDisplayMetrics().widthPixels;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            Point point = new Point();
+            ((WindowManager) MyApplication.getAppContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRealSize(point);
+            widthPixels = point.x;
+        }
+        Log.d(TAG, "屏幕宽度:"+widthPixels);
+        return widthPixels;
     }
 
     @SuppressWarnings("unused")
     public static int getScreenHeight(){
-        Log.d(TAG, "屏幕高度:"+MyApplication.getAppContext().getResources().getDisplayMetrics().heightPixels);
-        return MyApplication.getAppContext().getResources().getDisplayMetrics().heightPixels;
+        int heightPixels = MyApplication.getAppContext().getResources().getDisplayMetrics().heightPixels;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            Point point = new Point();
+            ((WindowManager) MyApplication.getAppContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRealSize(point);
+            heightPixels = point.y;
+        }
+
+        Log.d(TAG, "屏幕高度:"+heightPixels);
+        return heightPixels;
     }
 
     @SuppressWarnings("unused")
@@ -273,7 +290,9 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if(requestCode == REQ_SAVE_WALLPAPER){
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+            if (grantResults.length == 2
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                    && grantResults[1] == PackageManager.PERMISSION_GRANTED){
                 PrefHelper.setVal(SET_SAVE, true);
             }else{
                 chk_save_to_album.setChecked(false);
@@ -459,8 +478,10 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
                 //检查权限
                 if(Build.VERSION.SDK_INT>=23) {
                     int hasWriteStoragePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-                    if (hasWriteStoragePermission != PackageManager.PERMISSION_GRANTED){
-                        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQ_SAVE_WALLPAPER);
+                    int hasReadStoragePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
+                    if (hasWriteStoragePermission != PackageManager.PERMISSION_GRANTED
+                            || hasReadStoragePermission != PackageManager.PERMISSION_GRANTED){
+                        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQ_SAVE_WALLPAPER);
                     }else{
                         PrefHelper.setVal(SET_SAVE, true);
                     }
