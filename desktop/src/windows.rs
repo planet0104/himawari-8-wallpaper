@@ -33,6 +33,7 @@ IconFile=--
 
 const IDR_EXIT: usize = 10;
 const IDR_HOME: usize = 20;
+const IDR_DOWNLOAD: usize = 40;
 const IDR_STARTUP: usize = 30;
 const IDR_TP_FULL: usize = 210;
 const IDR_TP_HALF: usize = 211;
@@ -139,7 +140,7 @@ pub unsafe extern "system" fn window_proc(
         WM_CREATE => {
             NID.with(|nid| {
                 let mut nid = nid.borrow_mut();
-                nid.cbSize = mem::size_of::<NOTIFYICONDATAW>() as u32;;
+                nid.cbSize = mem::size_of::<NOTIFYICONDATAW>() as u32;
                 nid.hWnd = h_wnd;
                 nid.uID = 0;
                 nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
@@ -196,6 +197,7 @@ pub unsafe extern "system" fn window_proc(
                     AppendMenuW(h_menu, MF_STRING, IDR_STARTUP, convert("开机启动(已关闭)"));
                 }
             }
+            AppendMenuW(h_menu, MF_STRING, IDR_DOWNLOAD, convert("下载壁纸"));
             AppendMenuW(h_menu, MF_STRING, IDR_HOME, convert("项目主页"));
             AppendMenuW(h_menu, MF_STRING, IDR_EXIT, convert("退出"));
             *H_MENU.lock().unwrap() = h_menu as isize;
@@ -239,6 +241,11 @@ pub unsafe extern "system" fn window_proc(
                         //显示菜单并获取选项ID
                         IDR_EXIT => {
                             SendMessageW(h_wnd, WM_CLOSE, w_param, l_param);
+                        }
+                        IDR_DOWNLOAD => {
+                            std::thread::spawn(move || {
+                                open_downloader();
+                            });
                         }
                         IDR_HOME => {
                             //打开github主页链接
@@ -521,4 +528,85 @@ pub fn convert_u16(s: &str) -> Vec<u16> {
     let mut v: Vec<u16> = s.encode_utf16().collect();
     v.push(0);
     v
+}
+
+fn open_downloader(){
+    use sciter::Value;
+    let width = 330;
+    let height = 270;
+    let mut window = sciter::window::Builder::main_window()
+    .with_rect((*SCREEN_WIDTH/2-width/2, *SCREEN_HEIGHT/2-height/2, width, height))
+    .fixed()
+    .create();
+
+    struct EventHandler{
+        hwnd:isize
+    };
+
+    impl EventHandler {
+        fn download_wallpaper(&self, width: i32, height:i32, progress: Value, done: Value){
+            use std::thread;
+            use winapi::um::commdlg::{GetSaveFileNameW, OFN_HIDEREADONLY, OFN_PATHMUSTEXIST, OPENFILENAMEW};
+            let hwnd = self.hwnd;
+            thread::spawn(move || {
+                //下载壁纸
+                if wallpaper::download_wallpaper(
+                    width,
+                    height,
+                    move |current: i32, total: i32| {
+                        println!("download_wallpaper {}/{}", current, total);
+                        progress.call(None, &make_args!(current, total), None).unwrap();
+                    },
+                )
+                .is_err()
+                {
+                    println!("download_wallpaper error!!!");
+                    done.call(None, &make_args!(false), None).unwrap();
+                } else {
+                    println!("download_wallpaper 成功！");
+                    //另存为对话框
+                    let mut ofn: OPENFILENAMEW = unsafe { std::mem::zeroed() };
+                    let mut file_name:[u16; MAX_PATH] = [0; MAX_PATH];
+                    let mut title_name:[u16; MAX_PATH] = [0; MAX_PATH];
+                    ofn.lpstrFile = file_name.as_mut_ptr();//初始化文件名​​
+                    ofn.nMaxFile = MAX_PATH as u32;
+                    ofn.lpstrFileTitle = title_name.as_mut_ptr();
+                    ofn.nMaxFileTitle = MAX_PATH as u32;
+                    ofn.lpstrFilter = convert("*.png\0\0"); //扩展名过滤
+                    ofn.lpstrDefExt = convert("png");//默认扩展名
+                    ofn.lpstrTitle = null_mut();
+                    ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
+                    ofn.lStructSize = mem::size_of::<OPENFILENAMEW>() as u32;
+                    ofn.hwndOwner = hwnd as HWND;
+                    if unsafe{ GetSaveFileNameW(&mut ofn) == 0 }{
+                        let path = String::from_utf16(&file_name).unwrap().replace("\u{0}", "");
+                        println!("文件名:{}", path);
+                        let title = String::from_utf16(&title_name).unwrap().replace("\u{0}", "");
+                        println!("标题:{}", title);
+                    }
+                    done.call(None, &make_args!(true), None).unwrap();
+                }
+            });
+        }
+    }
+
+    impl EventHandler{
+        fn new(hwnd: isize) -> EventHandler{
+            EventHandler{hwnd}
+        }
+    }
+
+    impl sciter::EventHandler for EventHandler {
+        dispatch_script_call! {
+            fn download_wallpaper(i32, i32, Value, Value);
+        }
+    }
+
+    window.event_handler(EventHandler::new(window.get_hwnd() as isize));
+
+    // let html = include_bytes!("../main.html");
+
+    let path = std::env::current_dir().unwrap();
+    window.load_file(&format!("{}\\main.html", path.display()));
+    window.run_app();
 }

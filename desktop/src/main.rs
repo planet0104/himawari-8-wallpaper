@@ -1,4 +1,6 @@
-#![no_main]
+// #![no_main]
+// #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 mod himawari8;
 mod wallpaper;
 #[cfg(windows)]
@@ -7,6 +9,11 @@ mod windows;
 use winapi::shared::{minwindef::HINSTANCE, ntdef::LPSTR};
 #[macro_use]
 extern crate lazy_static;
+
+#[cfg(windows)]
+#[macro_use]
+extern crate sciter;
+
 use std::env;
 use std::fs::create_dir;
 use std::path::{Path, PathBuf};
@@ -17,6 +24,10 @@ const TYPE_FULL: i32 = 0; //整幅图
 const TYPE_HALF: i32 = 1; //半副图
 
 static ICON: &[u8] = include_bytes!("../icon.ico");
+
+#[cfg(windows)]
+static SCITER_DLL: &[u8] = include_bytes!("../sciter.dll");
+
 pub struct Config {
     freq: i32,
     show_type: i32,
@@ -50,18 +61,28 @@ fn init_dir() -> Config {
     if let Err(err) = env::set_current_dir(tmp_dir) {
         info!("当前工作文件夹设置失败:{:?}", err);
     }
-    //解压ico文件
+    //解压ico, dll文件
     if cfg!(windows) {
         use std::fs::File;
         use std::io::Write;
         use std::path::Path;
+        if !Path::new("sciter.dll").exists() {
+            match File::create("sciter.dll") {
+                Ok(mut file) => {
+                    let _ = file.write_all(SCITER_DLL);
+                }
+                Err(err) => {
+                    error!("sciter.dll创建失败:{:?}", err);
+                }
+            }
+        }
         if !Path::new("icon.ico").exists() {
             match File::create("icon.ico") {
                 Ok(mut file) => {
                     let _ = file.write_all(ICON);
                 }
                 Err(err) => {
-                    info!("icon.ico创建失败:{:?}", err);
+                    error!("icon.ico创建失败:{:?}", err);
                 }
             }
         }
@@ -170,6 +191,8 @@ pub fn save_image(utc:chrono::DateTime<chrono::Utc>, file_name: &str, image:&ima
                     && p != cur_4d
                     && p != "./wallpaper.png"
                     && p != "./conf.ini"
+                    && p != "./sciter.dll"
+                    && p != "./main.html"
                 {
                     info!("删除文件:{}", p);
                     let _ = std::fs::remove_file(p);
