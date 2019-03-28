@@ -9,10 +9,12 @@
 [1.0.0 Linux 64位](https://raw.githubusercontent.com/planet0104/himawari-8-wallpaper/master/himawari-8-wallpaper)  
 
 Windows运行截图：
+
 ![托盘](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/tray.png)  
 ![下载图片](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/download.jpg)  
 
 Android运行截图：
+
 ![上午8点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/am8.png)  
 
 Himawari 8是日本的气象卫星，[卫星官网](http://himawari8.nict.go.jp/himawari8-image.htm)的图片每隔10分钟更新一次。himawari-8-wallpaper可自动下载卫星照片并设置为桌面壁纸。
