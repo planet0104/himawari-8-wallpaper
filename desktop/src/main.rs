@@ -1,6 +1,4 @@
-// #![no_main]
-// #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-
+#![no_main]
 mod himawari8;
 mod wallpaper;
 #[cfg(windows)]
@@ -26,7 +24,7 @@ const TYPE_HALF: i32 = 1; //半副图
 static ICON: &[u8] = include_bytes!("../icon.ico");
 
 #[cfg(windows)]
-static SCITER_DLL: &[u8] = include_bytes!("../sciter.dll");
+static SCITER_DLL_ZIP: &[u8] = include_bytes!("../sciter_dll.zip");
 
 pub struct Config {
     freq: i32,
@@ -41,13 +39,7 @@ impl Default for Config {
     }
 }
 
-fn init_dir() -> Config {
-    let env = env_logger::Env::default()
-        .filter_or("MY_LOG_LEVEL", "info")
-        .write_style_or("MY_LOG_STYLE", "always");
-
-    env_logger::init_from_env(env);
-    
+fn set_current_dir(){
     //设置临时文件夹为当前文件夹
     let tmp_dir = {
         let mut d = env::temp_dir();
@@ -57,10 +49,20 @@ fn init_dir() -> Config {
     if !tmp_dir.exists() {
         let _ = create_dir(tmp_dir.clone());
     }
-    info!("current_dir={:?}", tmp_dir);
+    // info!("current_dir={:?}", tmp_dir);
     if let Err(err) = env::set_current_dir(tmp_dir) {
         info!("当前工作文件夹设置失败:{:?}", err);
     }
+}
+
+fn init_dir() -> Config {
+    let env = env_logger::Env::default()
+        .filter_or("MY_LOG_LEVEL", "info")
+        .write_style_or("MY_LOG_STYLE", "always");
+
+    env_logger::init_from_env(env);
+    
+    set_current_dir();
     //解压ico, dll文件
     if cfg!(windows) {
         use std::fs::File;
@@ -69,7 +71,13 @@ fn init_dir() -> Config {
         if !Path::new("sciter.dll").exists() {
             match File::create("sciter.dll") {
                 Ok(mut file) => {
-                    let _ = file.write_all(SCITER_DLL);
+                    use std::io::prelude::*;
+                    let reader = std::io::Cursor::new(SCITER_DLL_ZIP);
+                    let mut zip = zip::ZipArchive::new(reader).unwrap();
+                    let mut dll_file = zip.by_index(0).unwrap();
+                    let mut data = vec![];
+                    dll_file.read_to_end(&mut data).unwrap();
+                    let _ = file.write_all(data.as_slice());
                 }
                 Err(err) => {
                     error!("sciter.dll创建失败:{:?}", err);
@@ -170,15 +178,20 @@ pub fn save_image(utc:chrono::DateTime<chrono::Utc>, file_name: &str, image:&ima
     
     //删除旧的文件
     use chrono::{Datelike, Timelike};
-    if let Ok(paths) = std::fs::read_dir("./"){
+    let tmp_dir = {
+        let mut d = env::temp_dir();
+        d.push("himawari-8-wallpaper");
+        d
+    };
+    if let Ok(paths) = std::fs::read_dir(tmp_dir){
         let cur_2d = format!(
-            "./2d_{}_{}_{}.png",
+            "2d_{}_{}_{}.png",
             utc.day(),
             utc.hour(),
             utc.minute() / 10
         );
         let cur_4d = format!(
-            "./4d_{}_{}_{}.png",
+            "4d_{}_{}_{}.png",
             utc.day(),
             utc.hour(),
             utc.minute() / 10
@@ -186,13 +199,13 @@ pub fn save_image(utc:chrono::DateTime<chrono::Utc>, file_name: &str, image:&ima
         for path in paths {
             if let Ok(path) = path{
                 let p = path.path().display().to_string();
-                if p != "./icon.ico"
-                    && p != cur_2d
-                    && p != cur_4d
-                    && p != "./wallpaper.png"
-                    && p != "./conf.ini"
-                    && p != "./sciter.dll"
-                    && p != "./main.html"
+                if !p.ends_with("icon.ico")
+                    && !p.ends_with(&cur_2d)
+                    && !p.ends_with(&cur_4d)
+                    && !p.ends_with("wallpaper.png")
+                    && !p.ends_with("conf.ini")
+                    && !p.ends_with("sciter.dll")
+                    && !p.ends_with("main.html")
                 {
                     info!("删除文件:{}", p);
                     let _ = std::fs::remove_file(p);

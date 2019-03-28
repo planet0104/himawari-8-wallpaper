@@ -23,8 +23,7 @@ clap = "2.32.0"
 winapi = { version = "0.3", features = ["shellapi", "winuser", "commdlg"] }
 thread-id = "3.3.0"
 sciter-rs = "0.5.45"
-# azul = "0.1.0"
-# azul = { git = "https://github.com/maps4print/azul" }
+zip = "0.5.1"
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"

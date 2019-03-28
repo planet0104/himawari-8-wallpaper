@@ -68,11 +68,11 @@ where
 }
 
 //整幅画
-pub fn set_full<C>(
+pub fn download_full<C>(
     screen_width: i32,
     screen_height: i32,
     callback: C,
-) -> Result<(), Box<std::error::Error>>
+) -> Result<ImageBuffer<image::Rgb<u8>, Vec<u8>>, Box<std::error::Error>>
 where
     C: Fn(i32, i32) + 'static,
 {
@@ -125,7 +125,7 @@ where
     //拼接
     let offset_x = ((wallpaper.width() - image.width()) / 2) as usize;
     let top_border_scale = if screen_height > 1200 { 0.25 } else { 0.0 };
-    let offset_y = if cfg!(windows) {
+    let offset_y = if cfg!(windows) && screen_height < screen_width {
         ((wallpaper.height() - image.height()) as f64 * top_border_scale) as usize
     } else {
         (wallpaper.height() - image.height()) as usize / 2
@@ -141,15 +141,15 @@ where
         }
     }
 
-    crate::set_wallpaper(wallpaper)
+    Ok(wallpaper)
 }
 
 //取半边, 由于半边要求地球图片不管是720p还是1080p，直径都大于1100，所以都取4x4图
-pub fn set_half<C>(
+pub fn download_half<C>(
     screen_width: i32,
     screen_height: i32,
     callback: C,
-) -> Result<(), Box<std::error::Error>>
+) -> Result<ImageBuffer<image::Rgb<u8>, Vec<u8>>, Box<std::error::Error>>
 where
     C: Fn(i32, i32) + 'static,
 {   
@@ -240,5 +240,5 @@ where
         }
     };
 
-    crate::set_wallpaper(wallpaper)
+    Ok(wallpaper)
 }

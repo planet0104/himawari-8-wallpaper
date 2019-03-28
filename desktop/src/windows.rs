@@ -65,21 +65,18 @@ thread_local! {
 fn switch_to_full() {
     let tid = thread_id::get();
     std::thread::spawn(move || {
-        if wallpaper::set_full(
-            *SCREEN_WIDTH,
-            *SCREEN_HEIGHT,
-            move |current: i32, total: i32| unsafe {
+        match wallpaper::download_full(*SCREEN_WIDTH, *SCREEN_HEIGHT, move |current: i32, total: i32| unsafe {
                 PostThreadMessageW(tid as u32, MSG_PROGRESS, current as usize, total as isize);
-            },
-        )
-        .is_err()
-        {
-            unsafe {
-                PostThreadMessageW(tid as u32, MSG_ERROR, 0, 0);
+        }){
+            Err(_err) => {
+                unsafe { PostThreadMessageW(tid as u32, MSG_ERROR, 0, 0); }
             }
-        } else {
-            unsafe {
-                PostThreadMessageW(tid as u32, MSG_OK, 0, 0);
+            Ok(wallpaper) => {
+                if crate::set_wallpaper(wallpaper).is_err(){
+                    unsafe { PostThreadMessageW(tid as u32, MSG_ERROR, 0, 0); }
+                }else{
+                    unsafe { PostThreadMessageW(tid as u32, MSG_OK, 0, 0); }
+                }
             }
         }
     });
@@ -89,21 +86,18 @@ fn switch_to_full() {
 fn switch_to_half() {
     let tid = thread_id::get();
     std::thread::spawn(move || {
-        if wallpaper::set_half(
-            *SCREEN_WIDTH,
-            *SCREEN_HEIGHT,
-            move |current: i32, total: i32| unsafe {
+        match wallpaper::download_half(*SCREEN_WIDTH, *SCREEN_HEIGHT, move |current: i32, total: i32| unsafe {
                 PostThreadMessageW(tid as u32, MSG_PROGRESS, current as usize, total as isize);
-            },
-        )
-        .is_err()
-        {
-            unsafe {
-                PostThreadMessageW(tid as u32, MSG_ERROR, 0, 0);
+        }){
+            Err(_err) => {
+                unsafe { PostThreadMessageW(tid as u32, MSG_ERROR, 0, 0); }
             }
-        } else {
-            unsafe {
-                PostThreadMessageW(tid as u32, MSG_OK, 0, 0);
+            Ok(wallpaper) => {
+                if crate::set_wallpaper(wallpaper).is_err(){
+                    unsafe { PostThreadMessageW(tid as u32, MSG_ERROR, 0, 0); }
+                }else{
+                    unsafe { PostThreadMessageW(tid as u32, MSG_OK, 0, 0); }
+                }
             }
         }
     });
@@ -261,10 +255,10 @@ pub unsafe extern "system" fn window_proc(
                         IDR_STARTUP => {
                             if let Ok(run_on_startup) = is_app_registered_for_startup(APP_NAME){
                                 if run_on_startup{
-                                    println!("删除启动项:{:?}", remove_app_for_startup(APP_NAME));
+                                    info!("删除启动项:{:?}", remove_app_for_startup(APP_NAME));
                                     ModifyMenuW(h_menu, IDR_STARTUP as u32, MF_BYCOMMAND, IDR_STARTUP, convert("开机启动(已关闭)"));
                                 }else{
-                                    println!("添加启动项={:?}", register_app_for_startup(APP_NAME));
+                                    info!("添加启动项={:?}", register_app_for_startup(APP_NAME));
                                     ModifyMenuW(h_menu, IDR_STARTUP as u32, MF_BYCOMMAND, IDR_STARTUP, convert("开机启动(已开启)"));
                                 }
                             }
@@ -531,9 +525,10 @@ pub fn convert_u16(s: &str) -> Vec<u16> {
 }
 
 fn open_downloader(){
+    crate::set_current_dir();
     use sciter::Value;
-    let width = 330;
-    let height = 270;
+    let width = 360;
+    let height = 265;
     let mut window = sciter::window::Builder::main_window()
     .with_rect((*SCREEN_WIDTH/2-width/2, *SCREEN_HEIGHT/2-height/2, width, height))
     .fixed()
@@ -544,47 +539,66 @@ fn open_downloader(){
     };
 
     impl EventHandler {
-        fn download_wallpaper(&self, width: i32, height:i32, progress: Value, done: Value){
+        fn download_wallpaper(&self, tp:String, width: i32, height:i32, progress: Value, done: Value){
             use std::thread;
             use winapi::um::commdlg::{GetSaveFileNameW, OFN_HIDEREADONLY, OFN_PATHMUSTEXIST, OPENFILENAMEW};
             let hwnd = self.hwnd;
             thread::spawn(move || {
-                //下载壁纸
-                if wallpaper::download_wallpaper(
-                    width,
-                    height,
-                    move |current: i32, total: i32| {
-                        println!("download_wallpaper {}/{}", current, total);
+                crate::set_current_dir();
+                let result = if tp=="full"{
+                    wallpaper::download_full(width, height, move |current: i32, total: i32| {
                         progress.call(None, &make_args!(current, total), None).unwrap();
-                    },
-                )
-                .is_err()
-                {
-                    println!("download_wallpaper error!!!");
-                    done.call(None, &make_args!(false), None).unwrap();
-                } else {
-                    println!("download_wallpaper 成功！");
-                    //另存为对话框
-                    let mut ofn: OPENFILENAMEW = unsafe { std::mem::zeroed() };
-                    let mut file_name:[u16; MAX_PATH] = [0; MAX_PATH];
-                    let mut title_name:[u16; MAX_PATH] = [0; MAX_PATH];
-                    ofn.lpstrFile = file_name.as_mut_ptr();//初始化文件名​​
-                    ofn.nMaxFile = MAX_PATH as u32;
-                    ofn.lpstrFileTitle = title_name.as_mut_ptr();
-                    ofn.nMaxFileTitle = MAX_PATH as u32;
-                    ofn.lpstrFilter = convert("*.png\0\0"); //扩展名过滤
-                    ofn.lpstrDefExt = convert("png");//默认扩展名
-                    ofn.lpstrTitle = null_mut();
-                    ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
-                    ofn.lStructSize = mem::size_of::<OPENFILENAMEW>() as u32;
-                    ofn.hwndOwner = hwnd as HWND;
-                    if unsafe{ GetSaveFileNameW(&mut ofn) == 0 }{
-                        let path = String::from_utf16(&file_name).unwrap().replace("\u{0}", "");
-                        println!("文件名:{}", path);
-                        let title = String::from_utf16(&title_name).unwrap().replace("\u{0}", "");
-                        println!("标题:{}", title);
+                    })
+                }else{
+                    wallpaper::download_half(width, height, move |current: i32, total: i32| {
+                        progress.call(None, &make_args!(current, total), None).unwrap();
+                    })
+                };
+
+                match result{
+                    Err(err) => {
+                        if format!("{:?}", err).contains("正在下载中"){
+                            done.call(None, &make_args!(4), None).unwrap();
+                        }else{
+                            done.call(None, &make_args!(1), None).unwrap();
+                        }
                     }
-                    done.call(None, &make_args!(true), None).unwrap();
+                    Ok(wallpaper) => {
+                        //另存为对话框
+                        let mut ofn: OPENFILENAMEW = unsafe { std::mem::zeroed() };
+                        let mut file_name:[u16; MAX_PATH] = [0; MAX_PATH];
+                        let mut title_name:[u16; MAX_PATH] = [0; MAX_PATH];
+                        ofn.lpstrFile = file_name.as_mut_ptr();//初始化文件名​​
+                        ofn.nMaxFile = MAX_PATH as u32;
+                        ofn.lpstrFileTitle = title_name.as_mut_ptr();
+                        ofn.nMaxFileTitle = MAX_PATH as u32;
+                        use std::ffi::OsStr;
+                        use std::os::windows::ffi::OsStrExt;
+                        let text = OsStr::new("图片文件(*.png;*.jpg;*.jpeg;*.bmp)\0*.png;*.jpg;*.jpeg;*.bmp\0全部文件(*.*)\0*.*\0\0").encode_wide().chain(Some(0).into_iter()).collect::<Vec<_>>();
+                        ofn.lpstrFilter = text.as_ptr();
+                        ofn.lpstrDefExt = convert("png");//默认扩展名
+                        ofn.lpstrTitle = null_mut();
+                        ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
+                        ofn.lStructSize = mem::size_of::<OPENFILENAMEW>() as u32;
+                        ofn.hwndOwner = hwnd as HWND;
+                        if unsafe{ GetSaveFileNameW(&mut ofn) != 0 }{
+                            let path = String::from_utf16(&file_name).unwrap().replace("\u{0}", "");
+                            // info!("文件名:{}", path);
+                            // let title = String::from_utf16(&title_name).unwrap().replace("\u{0}", "");
+                            // info!("标题:{}", title);
+                            
+                            //保存文件
+                            let result = wallpaper.save(path);
+                            if result.is_err(){
+                                error!("壁纸图片保存失败:{:?}", result.err());
+                                done.call(None, &make_args!(2), None).unwrap();
+                            }else{
+                                done.call(None, &make_args!(0), None).unwrap();
+                            }
+                        }else{
+                            done.call(None, &make_args!(3), None).unwrap();
+                        }
+                    }
                 }
             });
         }
@@ -598,15 +612,15 @@ fn open_downloader(){
 
     impl sciter::EventHandler for EventHandler {
         dispatch_script_call! {
-            fn download_wallpaper(i32, i32, Value, Value);
+            fn download_wallpaper(String, i32, i32, Value, Value);
         }
     }
 
     window.event_handler(EventHandler::new(window.get_hwnd() as isize));
 
-    // let html = include_bytes!("../main.html");
-
-    let path = std::env::current_dir().unwrap();
-    window.load_file(&format!("{}\\main.html", path.display()));
+    let html = include_bytes!("../main.html");
+    window.load_html(html, Some("\\main.html"));
+    // let path = std::env::current_dir().unwrap();
+    // window.load_file(&format!("{}\\main.html", path.display()));
     window.run_app();
 }

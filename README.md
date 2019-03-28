@@ -8,19 +8,14 @@
 [1.0.0 Windows 64位](https://raw.githubusercontent.com/planet0104/himawari-8-wallpaper/master/himawari-8-wallpaper.exe)  
 [1.0.0 Linux 64位](https://raw.githubusercontent.com/planet0104/himawari-8-wallpaper/master/himawari-8-wallpaper)  
 
-Android运行截图如下：
+Windows运行截图：
+![托盘](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/tray.png)  
+![下载图片](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/download.jpg)  
 
-![上午4点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/am4.png)  
-![上午6点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/am6.png)  
+Android运行截图：
 ![上午8点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/am8.png)  
-![中午12点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm12.png)  
-![下午3点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm15.png)  
-![傍晚6点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm18.png)  
-![晚上8点](https://github.com/planet0104/himawari-8-wallpaper/blob/master/screenshot/pm20.png)  
-
 
 Himawari 8是日本的气象卫星，[卫星官网](http://himawari8.nict.go.jp/himawari8-image.htm)的图片每隔10分钟更新一次。himawari-8-wallpaper可自动下载卫星照片并设置为桌面壁纸。
-
 
 从网站获取图片时，大概只能取到20分钟之前的图片。下载图片的url格式如下：  
 
