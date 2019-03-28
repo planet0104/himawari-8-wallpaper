@@ -113,6 +113,7 @@ fn init_timer(h_wnd: HWND, min: i32) {
     });
     //启动定时器 10分钟一次, 30分钟一次, 60分钟一次
     unsafe extern "system" fn task(_: HWND, _: UINT, _: UINT_PTR, _: DWORD) {
+        crate::set_current_dir();
         match CONFIG.lock().unwrap().show_type {
             TYPE_HALF => switch_to_half(),
             TYPE_FULL => switch_to_full(),
