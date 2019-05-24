@@ -92,7 +92,9 @@ pub fn set_wallpaper(
 //JNI加载完成
 #[no_mangle]
 pub extern fn JNI_OnLoad(jvm: JavaVM, _reserved: *mut std::ffi::c_void) -> jint{
-	android_logger::init_once(android_logger::Filter::default().with_min_level(log::Level::Info), Some("lib_wallpaper"));
+	android_logger::init_once(
+        android_logger::Config::default().with_min_level(log::Level::Info),
+    );
 	info!("JNI_OnLoad.");
 	*JVM.lock().unwrap() = Some(jvm);
 	jni::sys::JNI_VERSION_1_6
@@ -111,7 +113,7 @@ pub extern fn Java_io_github_planet0104_h8w_MainActivity_downloadAndSetWallpaper
 	info!("wallpaper_type:{:?}", wallpaper_type);
 
 	if wallpaper_type==0{
-		if let Err(err) = wallpaper::set_full(
+		if let Err(err) = wallpaper::download_full(
 			width,
 			height,
 			|current: i32, total: i32|{
@@ -129,7 +131,7 @@ pub extern fn Java_io_github_planet0104_h8w_MainActivity_downloadAndSetWallpaper
 			return 0;
 		}
 	}else{
-		if let Err(err) = wallpaper::set_half(
+		if let Err(err) = wallpaper::download_half(
 			width,
 			height,
 			|current: i32, total: i32|{
